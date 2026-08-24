@@ -1,0 +1,17 @@
+.venv/
+node_modules/
+frontend/dist/
+__pycache__/
+*.pyc
+backend/ml/data/
+.DS_Store
+.env
+.env.local
+*.env
+backend/**/hf_cache/
+~/.cache/huggingface/
+.vscode/
+.idea/
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/

@@ -1,0 +1,14 @@
+fastapi>=0.115
+uvicorn[standard]>=0.30
+pydantic>=2.7
+numpy>=1.26
+scikit-learn>=1.5
+joblib>=1.4
+# primary detector
+torch>=2.3
+transformers>=4.44
+# training only
+datasets>=2.20
+# tests
+pytest>=8.2
+httpx>=0.27

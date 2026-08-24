@@ -1,0 +1,26 @@
+{
+  "model_name": "tfidf-stylometric-logreg",
+  "version": "2026-08-24-hc3",
+  "dataset": "Hello-SimpleAI/HC3 (all.jsonl), sentence-level, question-grouped 80/20 split",
+  "train_sentences": 80000,
+  "test_sentences": 16000,
+  "metrics": {
+    "accuracy": 0.9622,
+    "precision_ai": 0.9432,
+    "recall_ai": 0.9836,
+    "f1_ai": 0.963,
+    "roc_auc": 0.9928,
+    "brier_score": 0.0314,
+    "confusion_matrix": [
+      [
+        7526,
+        474
+      ],
+      [
+        131,
+        7869
+      ]
+    ],
+    "n_test": 16000
+  }
+}

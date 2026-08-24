@@ -1,0 +1,23 @@
+{
+  "model": "Hello-SimpleAI/chatgpt-detector-roberta",
+  "n_per_class": 750,
+  "metrics": {
+    "accuracy": 0.988,
+    "precision_ai": 0.9893,
+    "recall_ai": 0.9867,
+    "f1_ai": 0.988,
+    "roc_auc": 0.9992,
+    "brier_score": 0.0098,
+    "confusion_matrix": [
+      [
+        742,
+        8
+      ],
+      [
+        10,
+        740
+      ]
+    ],
+    "n_test": 1500
+  }
+}
