@@ -15,3 +15,4 @@ backend/**/hf_cache/
 *.egg-info/
 .pytest_cache/
 .ipynb_checkpoints/
+.venv_new/

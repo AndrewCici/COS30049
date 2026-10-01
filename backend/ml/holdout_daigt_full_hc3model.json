@@ -1,0 +1,19 @@
+{
+  "accuracy": 0.4107,
+  "precision_ai": 0.3982,
+  "recall_ai": 0.9997,
+  "f1_ai": 0.5696,
+  "roc_auc": 0.8621,
+  "brier_score": 0.5271,
+  "confusion_matrix": [
+    [
+      936,
+      26431
+    ],
+    [
+      6,
+      17491
+    ]
+  ],
+  "n_test": 44864
+}
