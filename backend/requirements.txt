@@ -12,3 +12,4 @@ datasets>=2.20
 # tests
 pytest>=8.2
 httpx>=0.27
+matplotlib>=3.8
