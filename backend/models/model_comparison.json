@@ -276,7 +276,7 @@
     "features": "dense",
     "scaled": false,
     "n_train": 80000,
-    "fit_seconds": 6.7,
+    "fit_seconds": 6.8,
     "sentence": {
       "accuracy": 0.7031,
       "precision_ai": 0.7138,
@@ -411,7 +411,7 @@
     "features": "dense",
     "scaled": false,
     "n_train": 80000,
-    "fit_seconds": 23.7,
+    "fit_seconds": 23.0,
     "sentence": {
       "accuracy": 0.7828,
       "precision_ai": 0.8006,
@@ -546,7 +546,7 @@
     "features": "dense",
     "scaled": true,
     "n_train": 20000,
-    "fit_seconds": 49.5,
+    "fit_seconds": 49.2,
     "sentence": {
       "accuracy": 0.8072,
       "precision_ai": 0.8213,
@@ -681,7 +681,7 @@
     "features": "sparse",
     "scaled": false,
     "n_train": 80000,
-    "fit_seconds": 85.1,
+    "fit_seconds": 68.7,
     "sentence": {
       "accuracy": 0.8821,
       "precision_ai": 0.8603,

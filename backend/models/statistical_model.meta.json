@@ -1,95 +1,95 @@
 {
-  "model_name": "tfidf-stylometric-xgboost",
-  "model_key": "xgboost",
+  "model_name": "tfidf-stylometric-logreg",
+  "model_key": "logreg",
   "version": "2026-10-07-merged",
   "dataset": "merged DAIGT v2 + HC3 (dataprep/merged_dataset.csv), sentence-level, document-grouped 80/20 split, balanced per (source, label)",
   "train_sentences": 80000,
   "test_sentences": 14556,
   "metrics": {
-    "accuracy": 0.8821,
-    "precision_ai": 0.8603,
-    "recall_ai": 0.9182,
-    "f1_ai": 0.8883,
-    "roc_auc": 0.9558,
-    "brier_score": 0.0848,
-    "false_positive_rate": 0.1556,
+    "accuracy": 0.9005,
+    "precision_ai": 0.8861,
+    "recall_ai": 0.924,
+    "f1_ai": 0.9046,
+    "roc_auc": 0.9652,
+    "brier_score": 0.0743,
+    "false_positive_rate": 0.124,
     "confusion_matrix": [
       [
-        6015,
-        1108
+        6240,
+        883
       ],
       [
-        608,
-        6825
+        565,
+        6868
       ]
     ],
     "n_test": 14556
   },
   "essay_level_metrics": {
-    "accuracy": 0.9558,
-    "precision_ai": 0.927,
-    "recall_ai": 0.9884,
-    "f1_ai": 0.9567,
-    "roc_auc": 0.9876,
-    "brier_score": 0.0556,
-    "false_positive_rate": 0.076,
+    "accuracy": 0.9642,
+    "precision_ai": 0.9464,
+    "recall_ai": 0.9832,
+    "f1_ai": 0.9644,
+    "roc_auc": 0.9874,
+    "brier_score": 0.0492,
+    "false_positive_rate": 0.0544,
     "confusion_matrix": [
       [
-        900,
-        74
+        921,
+        53
       ],
       [
-        11,
-        940
+        16,
+        935
       ]
     ],
     "n_test": 1925
   },
   "cross_source_metrics": {
     "DAIGT_v2->HC3": {
-      "accuracy": 0.7349,
-      "precision_ai": 0.8778,
-      "recall_ai": 0.5736,
-      "f1_ai": 0.6938,
-      "roc_auc": 0.8726,
-      "brier_score": 0.1788,
-      "false_positive_rate": 0.0877,
+      "accuracy": 0.6994,
+      "precision_ai": 0.7684,
+      "recall_ai": 0.6097,
+      "f1_ai": 0.6799,
+      "roc_auc": 0.7896,
+      "brier_score": 0.1974,
+      "false_positive_rate": 0.202,
       "confusion_matrix": [
         [
-          2849,
-          274
+          2492,
+          631
         ],
         [
-          1464,
-          1969
+          1340,
+          2093
         ]
       ],
       "n_test": 6556
     },
     "HC3->DAIGT_v2": {
-      "accuracy": 0.5284,
-      "precision_ai": 0.5167,
-      "recall_ai": 0.878,
-      "f1_ai": 0.6506,
-      "roc_auc": 0.5962,
-      "brier_score": 0.3681,
-      "false_positive_rate": 0.8213,
+      "accuracy": 0.5755,
+      "precision_ai": 0.548,
+      "recall_ai": 0.8625,
+      "f1_ai": 0.6702,
+      "roc_auc": 0.6756,
+      "brier_score": 0.2796,
+      "false_positive_rate": 0.7115,
       "confusion_matrix": [
         [
-          715,
-          3285
+          1154,
+          2846
         ],
         [
-          488,
-          3512
+          550,
+          3450
         ]
       ],
       "n_test": 8000
     }
   },
-  "generalisation_gap_auc": 0.2214,
+  "generalisation_gap_auc": 0.2326,
   "problem_definition": "Generalise to unseen AI-generated text; accuracy on a random split is a reference point, not the selection criterion.",
-  "selection_criterion": "highest mean cross-source ROC-AUC (tie-break: in-distribution F1)",
+  "selection_criterion": "chosen manually via --final logreg",
   "candidates": {
     "logreg": {
       "cross_auc_mean": 0.7326,
