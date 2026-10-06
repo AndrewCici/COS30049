@@ -1,23 +1,66 @@
 {
   "model": "Hello-SimpleAI/chatgpt-detector-roberta",
-  "n_per_class": 750,
+  "n_per_class": 8000,
   "metrics": {
-    "accuracy": 0.988,
-    "precision_ai": 0.9893,
-    "recall_ai": 0.9867,
-    "f1_ai": 0.988,
-    "roc_auc": 0.9992,
-    "brier_score": 0.0098,
+    "accuracy": 0.8017,
+    "precision_ai": 0.757,
+    "recall_ai": 0.901,
+    "f1_ai": 0.8227,
+    "roc_auc": 0.9048,
+    "brier_score": 0.1828,
+    "false_positive_rate": 0.3018,
     "confusion_matrix": [
       [
-        742,
-        8
+        4973,
+        2150
       ],
       [
-        10,
-        740
+        736,
+        6697
       ]
     ],
-    "n_test": 1500
+    "n_test": 14556
+  },
+  "per_source": {
+    "DAIGT_v2": {
+      "accuracy": 0.6531,
+      "precision_ai": 0.6139,
+      "recall_ai": 0.8253,
+      "f1_ai": 0.7041,
+      "roc_auc": 0.7538,
+      "brier_score": 0.3206,
+      "false_positive_rate": 0.519,
+      "confusion_matrix": [
+        [
+          1924,
+          2076
+        ],
+        [
+          699,
+          3301
+        ]
+      ],
+      "n_test": 8000
+    },
+    "HC3": {
+      "accuracy": 0.9831,
+      "precision_ai": 0.9787,
+      "recall_ai": 0.9892,
+      "f1_ai": 0.9839,
+      "roc_auc": 0.9985,
+      "brier_score": 0.0147,
+      "false_positive_rate": 0.0237,
+      "confusion_matrix": [
+        [
+          3049,
+          74
+        ],
+        [
+          37,
+          3396
+        ]
+      ],
+      "n_test": 6556
+    }
   }
 }

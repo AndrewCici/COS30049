@@ -1,4 +1,5 @@
 .venv/
+.venv_new/
 node_modules/
 frontend/dist/
 __pycache__/
@@ -15,4 +16,9 @@ backend/**/hf_cache/
 *.egg-info/
 .pytest_cache/
 .ipynb_checkpoints/
-.venv_new/
+backend/ml/.cache/
+dataprep/*.csv
+dataprep/*.jsonl
+dataprep/archive/
+dataprep/eda_plots/
+backend/ml/_smoke/

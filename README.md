@@ -35,13 +35,58 @@ The first `/score` request downloads the transformer weights (~500 MB) if
 absent; when that fails (offline), the app automatically answers with the
 statistical model and says so in the UI.
 
-## Retrain the fallback model
+## Machine-learning pipeline (Assignment 2)
+
+All commands run from the repository root unless stated otherwise.
+
+**1. Environment (conda)**
+
+```bash
+conda env create -f environment.yml
+conda activate cos30049
+```
+
+**2. Data processing** (Person B, `dataprep/data_prep.py`). Place the raw files
+first: DAIGT v2 `train_v2_drcat_02.csv` (Kaggle `thedrcat/daigt-v2-train-dataset`)
+in `dataprep/archive/`, and HC3 `all.jsonl` (Hugging Face `Hello-SimpleAI/HC3`)
+in `dataprep/`.
+
+```bash
+python dataprep/data_prep.py            # writes dataprep/merged_dataset.csv (+ EDA plots)
+python dataprep/data_prep.py --skip-eda # same, without plots
+```
+
+The merged file has one row per document with columns `text, label (0=human,
+1=AI), source (DAIGT_v2 | HC3), topic, group, generator, generator_family`.
+
+**3. Train and compare models** (Person A, `backend/ml/train.py`)
 
 ```bash
 cd backend
-../.venv/bin/python -m ml.train         # downloads HC3, trains, evaluates
-../.venv/bin/python -m ml.evaluate_hf   # scores the HF model on the same test split
+python -m ml.train                  # full run (tens of minutes); writes models/
+python -m ml.train --fast           # ~10x smaller smoke test; writes ml/_smoke/ only
+python -m ml.evaluate_hf 8000       # pretrained RoBERTa on the same test sentences
+python -m ml.train --table-only     # add the RoBERTa row to models/model_comparison.md
 ```
+
+Outputs in `backend/models/`: `final_model.pkl` (selected model),
+`statistical_model.meta.json` (metrics, selection criterion),
+`model_comparison.md/json` (all models, three evaluation protocols). The exact
+sentences used are saved in `backend/ml/data/train_split.jsonl` and
+`test_split.jsonl`.
+
+**4. Predict with the trained model**
+
+```bash
+cd backend
+python -m ml.predict "Furthermore, it is important to note that this is a test. lol idk man."
+python -m ml.predict --file essay.txt
+```
+
+Or start the web app (see "Run it" above): `POST /api/v1/score`.
+
+**5. Clustering and held-out evaluation** (Person C) and further data
+analysis: see the section added by Person C.
 
 ## Tests
 
@@ -57,6 +102,7 @@ document score with 95% CI, and `meta` describing which detector answered.
 `http://localhost:8000/docs`.
 
 ## Environment variables
+
 
 | Variable | Effect |
 |---|---|

@@ -1,0 +1,16 @@
+# conda env for the whole project.  Create from the repo root:
+#   conda env create -f environment.yml && conda activate cos30049
+name: cos30049
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  - numpy
+  - pandas
+  - scikit-learn>=1.5
+  - matplotlib
+  - joblib
+  - xgboost          # conda-forge build bundles the OpenMP runtime (no brew libomp needed)
+  - pip:
+      - -r backend/requirements.txt
