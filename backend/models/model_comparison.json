@@ -1,0 +1,812 @@
+{
+  "logreg": {
+    "label": "Logistic Regression",
+    "model_name": "tfidf-stylometric-logreg",
+    "kind": "unit",
+    "features": "sparse",
+    "scaled": false,
+    "n_train": 80000,
+    "fit_seconds": 4.8,
+    "sentence": {
+      "accuracy": 0.9005,
+      "precision_ai": 0.8861,
+      "recall_ai": 0.924,
+      "f1_ai": 0.9046,
+      "roc_auc": 0.9652,
+      "brier_score": 0.0743,
+      "false_positive_rate": 0.124,
+      "confusion_matrix": [
+        [
+          6240,
+          883
+        ],
+        [
+          565,
+          6868
+        ]
+      ],
+      "n_test": 14556
+    },
+    "per_source": {
+      "DAIGT_v2": {
+        "accuracy": 0.8784,
+        "precision_ai": 0.8562,
+        "recall_ai": 0.9095,
+        "f1_ai": 0.882,
+        "roc_auc": 0.9539,
+        "brier_score": 0.0884,
+        "false_positive_rate": 0.1527,
+        "confusion_matrix": [
+          [
+            3389,
+            611
+          ],
+          [
+            362,
+            3638
+          ]
+        ],
+        "n_test": 8000
+      },
+      "HC3": {
+        "accuracy": 0.9275,
+        "precision_ai": 0.9223,
+        "recall_ai": 0.9409,
+        "f1_ai": 0.9315,
+        "roc_auc": 0.9761,
+        "brier_score": 0.0572,
+        "false_positive_rate": 0.0871,
+        "confusion_matrix": [
+          [
+            2851,
+            272
+          ],
+          [
+            203,
+            3230
+          ]
+        ],
+        "n_test": 6556
+      }
+    },
+    "essay": {
+      "accuracy": 0.9642,
+      "precision_ai": 0.9464,
+      "recall_ai": 0.9832,
+      "f1_ai": 0.9644,
+      "roc_auc": 0.9874,
+      "brier_score": 0.0492,
+      "false_positive_rate": 0.0544,
+      "confusion_matrix": [
+        [
+          921,
+          53
+        ],
+        [
+          16,
+          935
+        ]
+      ],
+      "n_test": 1925
+    },
+    "cross_source": {
+      "DAIGT_v2->HC3": {
+        "accuracy": 0.6994,
+        "precision_ai": 0.7684,
+        "recall_ai": 0.6097,
+        "f1_ai": 0.6799,
+        "roc_auc": 0.7896,
+        "brier_score": 0.1974,
+        "false_positive_rate": 0.202,
+        "confusion_matrix": [
+          [
+            2492,
+            631
+          ],
+          [
+            1340,
+            2093
+          ]
+        ],
+        "n_test": 6556
+      },
+      "HC3->DAIGT_v2": {
+        "accuracy": 0.5755,
+        "precision_ai": 0.548,
+        "recall_ai": 0.8625,
+        "f1_ai": 0.6702,
+        "roc_auc": 0.6756,
+        "brier_score": 0.2796,
+        "false_positive_rate": 0.7115,
+        "confusion_matrix": [
+          [
+            1154,
+            2846
+          ],
+          [
+            550,
+            3450
+          ]
+        ],
+        "n_test": 8000
+      }
+    },
+    "cross_auc_mean": 0.7326,
+    "generalisation_gap_auc": 0.2326
+  },
+  "knn": {
+    "label": "k-NN (k=25)",
+    "model_name": "svd-stylometric-knn",
+    "kind": "unit",
+    "features": "dense",
+    "scaled": true,
+    "n_train": 80000,
+    "fit_seconds": 0.4,
+    "sentence": {
+      "accuracy": 0.7475,
+      "precision_ai": 0.7247,
+      "recall_ai": 0.815,
+      "f1_ai": 0.7672,
+      "roc_auc": 0.836,
+      "brier_score": 0.1696,
+      "false_positive_rate": 0.323,
+      "confusion_matrix": [
+        [
+          4822,
+          2301
+        ],
+        [
+          1375,
+          6058
+        ]
+      ],
+      "n_test": 14556
+    },
+    "per_source": {
+      "DAIGT_v2": {
+        "accuracy": 0.7412,
+        "precision_ai": 0.7046,
+        "recall_ai": 0.8307,
+        "f1_ai": 0.7625,
+        "roc_auc": 0.8377,
+        "brier_score": 0.1712,
+        "false_positive_rate": 0.3483,
+        "confusion_matrix": [
+          [
+            2607,
+            1393
+          ],
+          [
+            677,
+            3323
+          ]
+        ],
+        "n_test": 8000
+      },
+      "HC3": {
+        "accuracy": 0.755,
+        "precision_ai": 0.7508,
+        "recall_ai": 0.7967,
+        "f1_ai": 0.773,
+        "roc_auc": 0.8372,
+        "brier_score": 0.1676,
+        "false_positive_rate": 0.2907,
+        "confusion_matrix": [
+          [
+            2215,
+            908
+          ],
+          [
+            698,
+            2735
+          ]
+        ],
+        "n_test": 6556
+      }
+    },
+    "essay": {
+      "accuracy": 0.8712,
+      "precision_ai": 0.8119,
+      "recall_ai": 0.9621,
+      "f1_ai": 0.8807,
+      "roc_auc": 0.9584,
+      "brier_score": 0.1388,
+      "false_positive_rate": 0.2177,
+      "confusion_matrix": [
+        [
+          762,
+          212
+        ],
+        [
+          36,
+          915
+        ]
+      ],
+      "n_test": 1925
+    },
+    "cross_source": {
+      "DAIGT_v2->HC3": {
+        "accuracy": 0.6319,
+        "precision_ai": 0.6327,
+        "recall_ai": 0.7084,
+        "f1_ai": 0.6684,
+        "roc_auc": 0.6892,
+        "brier_score": 0.2261,
+        "false_positive_rate": 0.4521,
+        "confusion_matrix": [
+          [
+            1711,
+            1412
+          ],
+          [
+            1001,
+            2432
+          ]
+        ],
+        "n_test": 6556
+      },
+      "HC3->DAIGT_v2": {
+        "accuracy": 0.5934,
+        "precision_ai": 0.6251,
+        "recall_ai": 0.4665,
+        "f1_ai": 0.5343,
+        "roc_auc": 0.6268,
+        "brier_score": 0.2542,
+        "false_positive_rate": 0.2797,
+        "confusion_matrix": [
+          [
+            2881,
+            1119
+          ],
+          [
+            2134,
+            1866
+          ]
+        ],
+        "n_test": 8000
+      }
+    },
+    "cross_auc_mean": 0.658,
+    "generalisation_gap_auc": 0.178
+  },
+  "decision_tree": {
+    "label": "Decision Tree",
+    "model_name": "svd-stylometric-decision-tree",
+    "kind": "unit",
+    "features": "dense",
+    "scaled": false,
+    "n_train": 80000,
+    "fit_seconds": 6.7,
+    "sentence": {
+      "accuracy": 0.7031,
+      "precision_ai": 0.7138,
+      "recall_ai": 0.6989,
+      "f1_ai": 0.7063,
+      "roc_auc": 0.7639,
+      "brier_score": 0.2057,
+      "false_positive_rate": 0.2924,
+      "confusion_matrix": [
+        [
+          5040,
+          2083
+        ],
+        [
+          2238,
+          5195
+        ]
+      ],
+      "n_test": 14556
+    },
+    "per_source": {
+      "DAIGT_v2": {
+        "accuracy": 0.7159,
+        "precision_ai": 0.7178,
+        "recall_ai": 0.7115,
+        "f1_ai": 0.7146,
+        "roc_auc": 0.7768,
+        "brier_score": 0.1989,
+        "false_positive_rate": 0.2797,
+        "confusion_matrix": [
+          [
+            2881,
+            1119
+          ],
+          [
+            1154,
+            2846
+          ]
+        ],
+        "n_test": 8000
+      },
+      "HC3": {
+        "accuracy": 0.6876,
+        "precision_ai": 0.709,
+        "recall_ai": 0.6842,
+        "f1_ai": 0.6964,
+        "roc_auc": 0.747,
+        "brier_score": 0.214,
+        "false_positive_rate": 0.3087,
+        "confusion_matrix": [
+          [
+            2159,
+            964
+          ],
+          [
+            1084,
+            2349
+          ]
+        ],
+        "n_test": 6556
+      }
+    },
+    "essay": {
+      "accuracy": 0.8462,
+      "precision_ai": 0.838,
+      "recall_ai": 0.8538,
+      "f1_ai": 0.8458,
+      "roc_auc": 0.9144,
+      "brier_score": 0.1444,
+      "false_positive_rate": 0.1612,
+      "confusion_matrix": [
+        [
+          817,
+          157
+        ],
+        [
+          139,
+          812
+        ]
+      ],
+      "n_test": 1925
+    },
+    "cross_source": {
+      "DAIGT_v2->HC3": {
+        "accuracy": 0.5915,
+        "precision_ai": 0.6346,
+        "recall_ai": 0.5185,
+        "f1_ai": 0.5707,
+        "roc_auc": 0.6202,
+        "brier_score": 0.2924,
+        "false_positive_rate": 0.3282,
+        "confusion_matrix": [
+          [
+            2098,
+            1025
+          ],
+          [
+            1653,
+            1780
+          ]
+        ],
+        "n_test": 6556
+      },
+      "HC3->DAIGT_v2": {
+        "accuracy": 0.5713,
+        "precision_ai": 0.5827,
+        "recall_ai": 0.5022,
+        "f1_ai": 0.5395,
+        "roc_auc": 0.597,
+        "brier_score": 0.3005,
+        "false_positive_rate": 0.3598,
+        "confusion_matrix": [
+          [
+            2561,
+            1439
+          ],
+          [
+            1991,
+            2009
+          ]
+        ],
+        "n_test": 8000
+      }
+    },
+    "cross_auc_mean": 0.6086,
+    "generalisation_gap_auc": 0.1553
+  },
+  "random_forest": {
+    "label": "Random Forest",
+    "model_name": "svd-stylometric-random-forest",
+    "kind": "unit",
+    "features": "dense",
+    "scaled": false,
+    "n_train": 80000,
+    "fit_seconds": 23.7,
+    "sentence": {
+      "accuracy": 0.7828,
+      "precision_ai": 0.8006,
+      "recall_ai": 0.7652,
+      "f1_ai": 0.7825,
+      "roc_auc": 0.8603,
+      "brier_score": 0.1622,
+      "false_positive_rate": 0.1989,
+      "confusion_matrix": [
+        [
+          5706,
+          1417
+        ],
+        [
+          1745,
+          5688
+        ]
+      ],
+      "n_test": 14556
+    },
+    "per_source": {
+      "DAIGT_v2": {
+        "accuracy": 0.795,
+        "precision_ai": 0.8019,
+        "recall_ai": 0.7835,
+        "f1_ai": 0.7926,
+        "roc_auc": 0.8752,
+        "brier_score": 0.1546,
+        "false_positive_rate": 0.1935,
+        "confusion_matrix": [
+          [
+            3226,
+            774
+          ],
+          [
+            866,
+            3134
+          ]
+        ],
+        "n_test": 8000
+      },
+      "HC3": {
+        "accuracy": 0.7678,
+        "precision_ai": 0.7989,
+        "recall_ai": 0.744,
+        "f1_ai": 0.7704,
+        "roc_auc": 0.8413,
+        "brier_score": 0.1714,
+        "false_positive_rate": 0.2059,
+        "confusion_matrix": [
+          [
+            2480,
+            643
+          ],
+          [
+            879,
+            2554
+          ]
+        ],
+        "n_test": 6556
+      }
+    },
+    "essay": {
+      "accuracy": 0.8883,
+      "precision_ai": 0.8857,
+      "recall_ai": 0.8885,
+      "f1_ai": 0.8871,
+      "roc_auc": 0.9558,
+      "brier_score": 0.1406,
+      "false_positive_rate": 0.1119,
+      "confusion_matrix": [
+        [
+          865,
+          109
+        ],
+        [
+          106,
+          845
+        ]
+      ],
+      "n_test": 1925
+    },
+    "cross_source": {
+      "DAIGT_v2->HC3": {
+        "accuracy": 0.6245,
+        "precision_ai": 0.6795,
+        "recall_ai": 0.5354,
+        "f1_ai": 0.5989,
+        "roc_auc": 0.676,
+        "brier_score": 0.2313,
+        "false_positive_rate": 0.2776,
+        "confusion_matrix": [
+          [
+            2256,
+            867
+          ],
+          [
+            1595,
+            1838
+          ]
+        ],
+        "n_test": 6556
+      },
+      "HC3->DAIGT_v2": {
+        "accuracy": 0.5999,
+        "precision_ai": 0.6282,
+        "recall_ai": 0.4895,
+        "f1_ai": 0.5502,
+        "roc_auc": 0.6255,
+        "brier_score": 0.2457,
+        "false_positive_rate": 0.2898,
+        "confusion_matrix": [
+          [
+            2841,
+            1159
+          ],
+          [
+            2042,
+            1958
+          ]
+        ],
+        "n_test": 8000
+      }
+    },
+    "cross_auc_mean": 0.6507,
+    "generalisation_gap_auc": 0.2096
+  },
+  "svm_rbf": {
+    "label": "SVM (RBF)",
+    "model_name": "svd-stylometric-svm-rbf",
+    "kind": "unit",
+    "features": "dense",
+    "scaled": true,
+    "n_train": 20000,
+    "fit_seconds": 49.5,
+    "sentence": {
+      "accuracy": 0.8072,
+      "precision_ai": 0.8213,
+      "recall_ai": 0.7955,
+      "f1_ai": 0.8082,
+      "roc_auc": 0.8885,
+      "brier_score": 0.1346,
+      "false_positive_rate": 0.1807,
+      "confusion_matrix": [
+        [
+          5836,
+          1287
+        ],
+        [
+          1520,
+          5913
+        ]
+      ],
+      "n_test": 14556
+    },
+    "per_source": {
+      "DAIGT_v2": {
+        "accuracy": 0.8186,
+        "precision_ai": 0.8234,
+        "recall_ai": 0.8113,
+        "f1_ai": 0.8173,
+        "roc_auc": 0.8999,
+        "brier_score": 0.1268,
+        "false_positive_rate": 0.174,
+        "confusion_matrix": [
+          [
+            3304,
+            696
+          ],
+          [
+            755,
+            3245
+          ]
+        ],
+        "n_test": 8000
+      },
+      "HC3": {
+        "accuracy": 0.7932,
+        "precision_ai": 0.8187,
+        "recall_ai": 0.7772,
+        "f1_ai": 0.7974,
+        "roc_auc": 0.8749,
+        "brier_score": 0.1441,
+        "false_positive_rate": 0.1892,
+        "confusion_matrix": [
+          [
+            2532,
+            591
+          ],
+          [
+            765,
+            2668
+          ]
+        ],
+        "n_test": 6556
+      }
+    },
+    "essay": {
+      "accuracy": 0.9252,
+      "precision_ai": 0.9243,
+      "recall_ai": 0.9243,
+      "f1_ai": 0.9243,
+      "roc_auc": 0.9732,
+      "brier_score": 0.0873,
+      "false_positive_rate": 0.0739,
+      "confusion_matrix": [
+        [
+          902,
+          72
+        ],
+        [
+          72,
+          879
+        ]
+      ],
+      "n_test": 1925
+    },
+    "cross_source": {
+      "DAIGT_v2->HC3": {
+        "accuracy": 0.6423,
+        "precision_ai": 0.7188,
+        "recall_ai": 0.5205,
+        "f1_ai": 0.6038,
+        "roc_auc": 0.7007,
+        "brier_score": 0.2577,
+        "false_positive_rate": 0.2238,
+        "confusion_matrix": [
+          [
+            2424,
+            699
+          ],
+          [
+            1646,
+            1787
+          ]
+        ],
+        "n_test": 6556
+      },
+      "HC3->DAIGT_v2": {
+        "accuracy": 0.6199,
+        "precision_ai": 0.6481,
+        "recall_ai": 0.5245,
+        "f1_ai": 0.5798,
+        "roc_auc": 0.6682,
+        "brier_score": 0.2643,
+        "false_positive_rate": 0.2848,
+        "confusion_matrix": [
+          [
+            2861,
+            1139
+          ],
+          [
+            1902,
+            2098
+          ]
+        ],
+        "n_test": 8000
+      }
+    },
+    "cross_auc_mean": 0.6845,
+    "generalisation_gap_auc": 0.204
+  },
+  "xgboost": {
+    "label": "XGBoost",
+    "model_name": "tfidf-stylometric-xgboost",
+    "kind": "beyond-unit",
+    "features": "sparse",
+    "scaled": false,
+    "n_train": 80000,
+    "fit_seconds": 85.1,
+    "sentence": {
+      "accuracy": 0.8821,
+      "precision_ai": 0.8603,
+      "recall_ai": 0.9182,
+      "f1_ai": 0.8883,
+      "roc_auc": 0.9558,
+      "brier_score": 0.0848,
+      "false_positive_rate": 0.1556,
+      "confusion_matrix": [
+        [
+          6015,
+          1108
+        ],
+        [
+          608,
+          6825
+        ]
+      ],
+      "n_test": 14556
+    },
+    "per_source": {
+      "DAIGT_v2": {
+        "accuracy": 0.8476,
+        "precision_ai": 0.8147,
+        "recall_ai": 0.9,
+        "f1_ai": 0.8552,
+        "roc_auc": 0.9337,
+        "brier_score": 0.1085,
+        "false_positive_rate": 0.2047,
+        "confusion_matrix": [
+          [
+            3181,
+            819
+          ],
+          [
+            400,
+            3600
+          ]
+        ],
+        "n_test": 8000
+      },
+      "HC3": {
+        "accuracy": 0.9242,
+        "precision_ai": 0.9178,
+        "recall_ai": 0.9394,
+        "f1_ai": 0.9285,
+        "roc_auc": 0.976,
+        "brier_score": 0.0559,
+        "false_positive_rate": 0.0925,
+        "confusion_matrix": [
+          [
+            2834,
+            289
+          ],
+          [
+            208,
+            3225
+          ]
+        ],
+        "n_test": 6556
+      }
+    },
+    "essay": {
+      "accuracy": 0.9558,
+      "precision_ai": 0.927,
+      "recall_ai": 0.9884,
+      "f1_ai": 0.9567,
+      "roc_auc": 0.9876,
+      "brier_score": 0.0556,
+      "false_positive_rate": 0.076,
+      "confusion_matrix": [
+        [
+          900,
+          74
+        ],
+        [
+          11,
+          940
+        ]
+      ],
+      "n_test": 1925
+    },
+    "cross_source": {
+      "DAIGT_v2->HC3": {
+        "accuracy": 0.7349,
+        "precision_ai": 0.8778,
+        "recall_ai": 0.5736,
+        "f1_ai": 0.6938,
+        "roc_auc": 0.8726,
+        "brier_score": 0.1788,
+        "false_positive_rate": 0.0877,
+        "confusion_matrix": [
+          [
+            2849,
+            274
+          ],
+          [
+            1464,
+            1969
+          ]
+        ],
+        "n_test": 6556
+      },
+      "HC3->DAIGT_v2": {
+        "accuracy": 0.5284,
+        "precision_ai": 0.5167,
+        "recall_ai": 0.878,
+        "f1_ai": 0.6506,
+        "roc_auc": 0.5962,
+        "brier_score": 0.3681,
+        "false_positive_rate": 0.8213,
+        "confusion_matrix": [
+          [
+            715,
+            3285
+          ],
+          [
+            488,
+            3512
+          ]
+        ],
+        "n_test": 8000
+      }
+    },
+    "cross_auc_mean": 0.7344,
+    "generalisation_gap_auc": 0.2214
+  }
+}

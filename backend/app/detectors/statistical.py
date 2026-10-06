@@ -29,6 +29,13 @@ class StatisticalDetector(Detector):
 
     def _load(self):
         if self._pipeline is None:
+            # xgboost must be imported before unpickling: on macOS its libomp
+            # can clash with the OpenMP runtime that scikit-learn/scipy load
+            # first, which segfaults inside joblib.load. Optional dependency.
+            try:
+                import xgboost  # noqa: F401
+            except ImportError:
+                pass
             import joblib  # deferred so probing availability stays cheap
             self._pipeline = joblib.load(MODEL_PATH)
         return self._pipeline

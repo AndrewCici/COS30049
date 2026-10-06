@@ -15,3 +15,9 @@ backend/**/hf_cache/
 *.egg-info/
 .pytest_cache/
 .ipynb_checkpoints/
+backend/ml/.cache/
+dataprep/*.csv
+dataprep/*.jsonl
+dataprep/archive/
+dataprep/eda_plots/
+backend/ml/_smoke/

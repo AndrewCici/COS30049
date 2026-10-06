@@ -3,6 +3,12 @@ statistical model was tested on (a balanced subsample — CPU transformer
 inference over the full 16k test sentences would take hours for no extra
 statistical power).
 
+Pass a large n (e.g. 8000) to score the *entire* test split, so every model
+in the comparison table is evaluated on the identical sentences.
+
+Caveat for the report: this pretrained detector was trained on HC3, so its
+HC3 results are not "unseen data"; only the DAIGT rows (see per_source) are.
+
 Usage:  python -m ml.evaluate_hf [n_per_class=750]
 """
 import json
@@ -35,10 +41,18 @@ def main(n_per_class: int = 750):
     metrics = evaluate([r["label"] for r in sample], probs)
     print(json.dumps(metrics, indent=2))
 
+    # Same breakdown as Table 3 in train.py: results per source corpus.
+    per_source = {}
+    for src in sorted({r["source"] for r in sample if "source" in r}):
+        idx = [i for i, r in enumerate(sample) if r.get("source") == src]
+        ys = [sample[i]["label"] for i in idx]
+        if len(set(ys)) == 2:
+            per_source[src] = evaluate(ys, [probs[i] for i in idx])
+
     out = MODELS / "hf_eval.json"
     out.write_text(json.dumps(
         {"model": det.model_name, "n_per_class": n_per_class,
-         "metrics": metrics}, indent=2))
+         "metrics": metrics, "per_source": per_source}, indent=2))
     print(f"Saved {out}")
 
 

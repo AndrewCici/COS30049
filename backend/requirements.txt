@@ -7,6 +7,10 @@ joblib>=1.4
 # primary detector
 torch>=2.3
 transformers>=4.44
+# training (and inference if xgboost is the final model)
+xgboost>=2.0
+pandas>=2.0
+matplotlib>=3.8
 # training only
 datasets>=2.20
 # tests
