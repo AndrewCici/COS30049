@@ -14,11 +14,12 @@ BACKEND = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(BACKEND))
 
 from app.detectors.features import StylometricFeatures
-from ml.train import evaluate
+from ml.train import evaluate, to_sentences
+import json
 
 # CLUSTERING PART
 # --- Step 1: Load data and filter to AI-generated essays only ---
-df = pd.read_csv("data/merged_dataset.csv")
+df = pd.read_csv("data/merged_dataset._v2.csv")
 ai_df = df[df["label"] == 1].copy()
 print(f"AI-generated essays: {ai_df.shape[0]}")
 
@@ -72,10 +73,14 @@ print("Silhouette scores by K:", dict(zip(k_values, silhouette_scores)))
 final_k = 6
 km_final = KMeans(n_clusters=final_k, random_state=42, n_init=10)
 ai_df["cluster"] = km_final.fit_predict(X_scaled)
-
+# Distance from each document to its own cluster centre (used to pick representative examples)
+dist = km_final.transform(X_scaled)
+ai_df["dist_to_centre"] = dist[np.arange(len(ai_df)), ai_df["cluster"].values]
 print("\nCluster sizes:")
 print(ai_df["cluster"].value_counts())
 
+print(pd.crosstab(ai_df["cluster"], ai_df["source"]))
+print(pd.crosstab(ai_df["cluster"], ai_df["source"], normalize="index").round(3))
 
 # --- Step 7: Describe each cluster ---
 # Compare each cluster's average feature values against the overall
@@ -92,17 +97,19 @@ for cluster_id in sorted(ai_df["cluster"].unique()):
         print(f"{name}: cluster_avg={val:.3f}, diff_from_overall={diff:+.3f}")
 
     cluster_essays = ai_df[cluster_mask]
-
-    # Prefer an example from the cluster's dominant source, when available,
     dominant_source = cluster_essays["source"].value_counts().idxmax()
-    source_essays = cluster_essays[cluster_essays["source"] == dominant_source]
 
-    clean_essays = source_essays[~source_essays["text"].str.contains(r"Passage \d+:", regex=True, na=False)]
-    example = clean_essays["text"].iloc[0] if len(clean_essays) > 0 else cluster_essays["text"].iloc[0]
+    # Use the document closest to the cluster centre as the most typical example,
+    # skipping malformed rows that contain "Passage N:" placeholder text
+    clean_essays = cluster_essays[~cluster_essays["text"].str.contains(r"Passage \d+:", regex=True, na=False)]
+    example = clean_essays.nsmallest(1, "dist_to_centre")["text"].iloc[0]
 
     print(f"Dominant source: {dominant_source}")
     print(f"Example: {example[:300]}")
-
+#Inspoect 5 documents xlosest to cluster 4 and get example
+    for t in ai_df[ai_df["cluster"] == 4].nsmallest(5, "dist_to_centre")["text"]:
+        print(t[:300])
+        print("---")
 
 # --- Step 8: Data quality check ---
 # Cross-checked Cluster 5 against source dataset: 1650/1652 essays (99.9%)
@@ -119,46 +126,60 @@ print(suspicious["source"].value_counts())
 
 
 #EVALUATION PART
-#  Load trained classifier for evaluation
+# Load trained classifier for evaluation
 MODELS_DIR = BACKEND / "models"
 model = joblib.load(MODELS_DIR / "statistical_model.joblib")
 print("\nModel loaded successfully")
 
-print(df["source"].value_counts())
-print(df[df["source"] == "DAIGT_v2"]["label"].value_counts())
-
-# --- Held-out test v1: entire DAIGT_v2 (model trained on HC3-only) ---
-held_out_df = df[df["source"] == "DAIGT_v2"]
-y_prob = model.predict_proba(held_out_df["text"])[:, 1]
-metrics_v1 = evaluate(held_out_df["label"], y_prob)
-
-# --- Held-out test v2: single topic (model trained on merged dataset) ---
-# held_out_df = df[df["topic"] == "Phones and driving"]
+# --- Generalisation test v1: full DAIGT essays (already run) ---
+# The HC3-trained model scored full DAIGT_v2 essays. Result saved in
+# holdout_daigt_full_hc3model.json, kept here for reference only.
+# held_out_df = df[df["source"] == "DAIGT_v2"]
 # y_prob = model.predict_proba(held_out_df["text"])[:, 1]
-# metrics_v2 = evaluate(held_out_df["label"], y_prob)
+# metrics_v1 = evaluate(held_out_df["label"], y_prob)
 
-#Error Analysis
-y_pred = (y_prob >= 0.5).astype(int)
+# --- Generalisation test v2: DAIGT sentences ---
+# The model was trained on sentences, so DAIGT_v2 essays are split the same way
+# (5-120 words per sentence) and each sentence inherits its essay's label.
+# A random sample of 10,000 essays keeps the run time manageable.
+held_out_df = df[df["source"] == "DAIGT_v2"].sample(10000, random_state=42)
 
-fp_mask = (held_out_df["label"].values == 0) & (y_pred == 1)  # human bị đoán nhầm AI
-fn_mask = (held_out_df["label"].values == 1) & (y_pred == 0)  # AI bị đoán nhầm human
+sent_texts, sent_labels = [], []
+for text, label in zip(held_out_df["text"], held_out_df["label"]):
+    for s in to_sentences([text]):
+        sent_texts.append(s)
+        sent_labels.append(int(label))
 
-false_positives = held_out_df[fp_mask]
-false_negatives = held_out_df[fn_mask]
+print(f"DAIGT sentences: {len(sent_texts)}")
+y_prob_sent = model.predict_proba(sent_texts)[:, 1]
+metrics_v2 = evaluate(sent_labels, y_prob_sent)
+print(metrics_v2)
 
-print("False positives:", len(false_positives))
-print("False negatives:", len(false_negatives))
+with open("holdout_daigt_sentences_hc3model.json", "w") as f:
+    json.dump(metrics_v2, f, indent=2)
 
+# --- Generalisation test v3 (only if a model trained on merged data is provided) ---
+# Use the topic that was left out of training, split into sentences as above.
+# held_out_df = df[df["topic"] == "Phones and driving"]
 
-# --- Error analysis: inspect false positives and false negatives from the held-out test ---
-# False negatives (AI misclassified as human)
-print("=== FALSE NEGATIVES ===")
-for text in false_negatives["text"]:
-    print(text[:300])
+# --- Error analysis: misclassified sentences from test v2 ---
+y_pred_sent = (y_prob_sent >= 0.5).astype(int)
+labels_arr = np.array(sent_labels)
+texts_arr = np.array(sent_texts, dtype=object)
+
+false_positives = texts_arr[(labels_arr == 0) & (y_pred_sent == 1)]  # human predicted as AI
+false_negatives = texts_arr[(labels_arr == 1) & (y_pred_sent == 0)]  # AI predicted as human
+print(f"\nFalse positives: {len(false_positives)}")
+print(f"False negatives: {len(false_negatives)}")
+
+# Random samples of each error type for manual inspection
+rng = np.random.default_rng(42)
+print("\n=== FALSE POSITIVES (sample of 8) ===")
+for t in rng.choice(false_positives, size=min(8, len(false_positives)), replace=False):
+    print(t)
     print("---")
 
-# False positives (human misclassified as AI) — random sample of 5
-print("\n=== FALSE POSITIVES (sample of 5) ===")
-for text in false_positives["text"].sample(5, random_state=42):
-    print(text[:300])
+print("\n=== FALSE NEGATIVES (sample of 8) ===")
+for t in rng.choice(false_negatives, size=min(8, len(false_negatives)), replace=False):
+    print(t)
     print("---")
