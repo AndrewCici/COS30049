@@ -10,7 +10,7 @@ BACKEND = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(BACKEND))
 from app.detectors.features import DiscourseFeatures, StylometricFeatures  # noqa: E402
 
-DATA = sys.argv[1] if len(sys.argv) > 1 else "data/merged_dataset_v2.csv"
+DATA = sys.argv[1] if len(sys.argv) > 1 else BACKEND.parent / "dataprep" / "merged_dataset.csv"
 df = pd.read_csv(DATA).dropna(subset=["text"])
 df = pd.concat([g.sample(min(len(g), 10000), random_state=42) for _, g in df.groupby("label")])
 

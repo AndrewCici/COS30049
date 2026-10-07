@@ -14,14 +14,14 @@ BACKEND = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(BACKEND))
 
 from app.detectors.features import StylometricFeatures
-from ml.train import (MAX_SENTS_PER_DOC, TRAIN_CAP_PER_CELL, build_heldout_datasets,
-                      evaluate, load_dataset, make_pipeline, model_zoo,
-                      sample_sentences, split_documents)
+from ml.train import (DEFAULT_DATASET, MAX_SENTS_PER_DOC, TRAIN_CAP_PER_CELL,
+                      build_heldout_datasets, evaluate, load_dataset, make_pipeline,
+                      model_zoo, sample_sentences, split_documents)
 import json
 
 # CLUSTERING PART
 # --- Step 1: Load data and filter to AI-generated essays only ---
-df = pd.read_csv("data/merged_dataset_v2.csv")
+df = pd.read_csv(DEFAULT_DATASET)
 ai_df = df[df["label"] == 1].copy()
 print(f"AI-generated essays: {ai_df.shape[0]}")
 
@@ -143,7 +143,7 @@ print(suspicious["source"].value_counts())
 # detector relies on having seen that generator.
 HELDOUT_FAMILY = "mistral"   # avoid "gpt": it covers every HC3 AI answer
 
-full_df = load_dataset("data/merged_dataset_v2.csv")
+full_df = load_dataset(DEFAULT_DATASET)
 print("\nAI documents per source and family:")
 print(full_df[full_df["label"] == 1].groupby(["source", "generator_family"]).size())
 
