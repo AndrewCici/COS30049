@@ -50,6 +50,10 @@ conda activate cos30049
 first: DAIGT v2 `train_v2_drcat_02.csv` (Kaggle `thedrcat/daigt-v2-train-dataset`)
 in `dataprep/archive/`, and HC3 `all.jsonl` (Hugging Face `Hello-SimpleAI/HC3`)
 in `dataprep/`.
+The processed dataset is shipped as `dataprep/merged_dataset.csv.zip`.
+To skip step 2, unzip it in place so that `dataprep/merged_dataset.csv` exists:
+
+    cd dataprep && unzip merged_dataset.csv.zip && cd ..
 
 ```bash
 python dataprep/data_prep.py            # writes dataprep/merged_dataset.csv (+ EDA plots)
@@ -74,6 +78,9 @@ Outputs in `backend/models/`: `final_model.pkl` (selected model),
 `model_comparison.md/json` (all models, three evaluation protocols). The exact
 sentences used are saved in `backend/ml/data/train_split.jsonl` and
 `test_split.jsonl`.
+
+The exact train/test sentences used for the reported results are shipped in
+`backend/ml/data/train_split.jsonl` and `test_split.jsonl`.
 
 **4. Predict with the trained model**
 
