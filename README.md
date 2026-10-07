@@ -94,16 +94,15 @@ Or start the web app (see "Run it" above): `POST /api/v1/score`.
 
 **5. Clustering, held-out evaluation and feature EDA** (Person C, `backend/ml/`)
 
-Both scripts read the merged dataset from `backend/ml/data/merged_dataset_v2.csv`
-(the folder is git-ignored). Copy the output of step 2 there first:
+Both scripts read `dataprep/merged_dataset.csv`, the same file used to train the
+final model (unzip `dataprep/merged_dataset.csv.zip` first, see step 2).
 
 ```bash
-mkdir -p backend/ml/data
-cp dataprep/merged_dataset.csv backend/ml/data/merged_dataset_v2.csv
 cd backend/ml
 python cluster_and_eval.py     # several minutes: K-Means + two retrainings
 python eda_features.py         # about 1-2 minutes
 ```
+
 
 
 `cluster_and_eval.py`:
