@@ -8,6 +8,7 @@
 | Random Forest | dense | no | unit | 0.801 | 0.765 | 0.782 | 0.860 | 0.162 | 0.199 | 0.887 | 0.956 | 23.0 |
 | SVM (RBF) | dense | yes | unit | 0.821 | 0.795 | 0.808 | 0.888 | 0.135 | 0.181 | 0.924 | 0.973 | 49.2 |
 | XGBoost | sparse | no | beyond-unit | 0.860 | 0.918 | 0.888 | 0.956 | 0.085 | 0.156 | 0.957 | 0.988 | 68.7 |
+| RoBERTa detector (pretrained; 8000 sentences per class) | n/a | n/a | beyond-unit | 0.757 | 0.901 | 0.823 | 0.905 | 0.183 | 0.302 | - | - | - |
 
 ### Table 2. Cross-source generalisation (train on one corpus, test on the other)
 
@@ -30,3 +31,4 @@
 | Random Forest | 0.802 | 0.783 | 0.793 | 0.875 | 0.799 | 0.744 | 0.770 | 0.841 |
 | SVM (RBF) | 0.823 | 0.811 | 0.817 | 0.900 | 0.819 | 0.777 | 0.797 | 0.875 |
 | XGBoost | 0.815 | 0.900 | 0.855 | 0.934 | 0.918 | 0.939 | 0.928 | 0.976 |
+| RoBERTa detector (pretrained) | 0.614 | 0.825 | 0.704 | 0.754 | 0.979 | 0.989 | 0.984 | 0.999 |
