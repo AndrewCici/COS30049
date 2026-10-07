@@ -85,8 +85,38 @@ python -m ml.predict --file essay.txt
 
 Or start the web app (see "Run it" above): `POST /api/v1/score`.
 
-**5. Clustering and held-out evaluation** (Person C) and further data
-analysis: see the section added by Person C.
+**5. Clustering and held-out evaluation** 
+**5. Clustering, held-out evaluation and feature EDA** (Person C, `backend/ml/`)
+
+Both scripts read the merged dataset from `backend/ml/data/merged_dataset_v2.csv`
+(the folder is git-ignored). Copy the output of step 2 there first:
+
+```bash
+mkdir -p backend/ml/data
+cp dataprep/merged_dataset.csv backend/ml/data/merged_dataset_v2.csv
+cd backend/ml
+python cluster_and_eval.py     # several minutes: K-Means + two retrainings
+python eda_features.py         # about 1-2 minutes
+```
+
+`cluster_and_eval.py`:
+- clusters the AI-generated documents with K-Means on the ten stylometric
+  features (`StandardScaler`, K = 2-8 compared by elbow and silhouette, K = 6 kept),
+  prints each cluster's size, distinctive features and the document closest
+  to its centre, and saves `elbow_plot.png`;
+- runs the held-out generator test: the final model configuration from
+  `ml/train.py` is trained once with and once without the Mistral family and
+  both are scored on the same balanced human/Mistral test sentences. Metrics
+  are saved to `heldout_family_mistral.json` and eight random false positives
+  and false negatives are printed for error analysis (seed 42).
+
+`eda_features.py` compares the 20 stylometric and discourse features on
+10,000 human and 10,000 AI texts and saves `eda_feature_differences.png` and
+`eda_feature_summary.csv`. Another dataset path can be passed as an argument:
+`python eda_features.py path/to/file.csv`.
+
+`holdout_daigt_full_hc3model.json` and `holdout_daigt_sentences_hc3model.json`
+are results of an earlier test with the HC3-only model, kept for reference.
 
 ## Tests
 
