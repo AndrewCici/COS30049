@@ -14,12 +14,14 @@ BACKEND = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(BACKEND))
 
 from app.detectors.features import StylometricFeatures
-from ml.train import evaluate, to_sentences
+from ml.train import (MAX_SENTS_PER_DOC, TRAIN_CAP_PER_CELL, build_heldout_datasets,
+                      evaluate, load_dataset, make_pipeline, model_zoo,
+                      sample_sentences, split_documents)
 import json
 
 # CLUSTERING PART
 # --- Step 1: Load data and filter to AI-generated essays only ---
-df = pd.read_csv("data/merged_dataset._v2.csv")
+df = pd.read_csv("data/merged_dataset_v2.csv")
 ai_df = df[df["label"] == 1].copy()
 print(f"AI-generated essays: {ai_df.shape[0]}")
 
@@ -125,61 +127,57 @@ print(f"\nMalformed rows found: {len(suspicious)} ({len(suspicious)/len(df)*100:
 print(suspicious["source"].value_counts())
 
 
-#EVALUATION PART
-# Load trained classifier for evaluation
-MODELS_DIR = BACKEND / "models"
-model = joblib.load(MODELS_DIR / "statistical_model.joblib")
-print("\nModel loaded successfully")
 
-# --- Generalisation test v1: full DAIGT essays (already run) ---
-# The HC3-trained model scored full DAIGT_v2 essays. Result saved in
-# holdout_daigt_full_hc3model.json, kept here for reference only.
-# held_out_df = df[df["source"] == "DAIGT_v2"]
-# y_prob = model.predict_proba(held_out_df["text"])[:, 1]
-# metrics_v1 = evaluate(held_out_df["label"], y_prob)
+    #EVALUATION PART
+# --- Earlier tests with the old HC3-only model (results saved, kept for reference) ---
+# v1: full DAIGT essays      -> holdout_daigt_full_hc3model.json
+# v2: DAIGT sentences        -> holdout_daigt_sentences_hc3model.json
 
-# --- Generalisation test v2: DAIGT sentences ---
-# The model was trained on sentences, so DAIGT_v2 essays are split the same way
-# (5-120 words per sentence) and each sentence inherits its essay's label.
-# A random sample of 10,000 essays keeps the run time manageable.
-held_out_df = df[df["source"] == "DAIGT_v2"].sample(10000, random_state=42)
+# --- Held-out generator family test ---
+# The final model's configuration (TF-IDF + stylometric + discourse features,
+# logistic regression, from ml/train.py) is trained twice on the same training split:
+#   seen:   every AI generator family included
+#   unseen: every AI document of HELDOUT_FAMILY removed
+# Both are scored on the same test set: human sentences plus sentences from the
+# held-out family, balanced 50/50. The drop from seen to unseen shows how much the
+# detector relies on having seen that generator.
+HELDOUT_FAMILY = "mistral"   # avoid "gpt": it covers every HC3 AI answer
 
-sent_texts, sent_labels = [], []
-for text, label in zip(held_out_df["text"], held_out_df["label"]):
-    for s in to_sentences([text]):
-        sent_texts.append(s)
-        sent_labels.append(int(label))
+full_df = load_dataset("data/merged_dataset_v2.csv")
+print("\nAI documents per source and family:")
+print(full_df[full_df["label"] == 1].groupby(["source", "generator_family"]).size())
 
-print(f"DAIGT sentences: {len(sent_texts)}")
-y_prob_sent = model.predict_proba(sent_texts)[:, 1]
-metrics_v2 = evaluate(sent_labels, y_prob_sent)
-print(metrics_v2)
 
-with open("holdout_daigt_sentences_hc3model.json", "w") as f:
-    json.dump(metrics_v2, f, indent=2)
+def fit_and_score(train, test):
+    """Train the final model's configuration and score it on the test set."""
+    pipe = make_pipeline(model_zoo()["logreg"])
+    pipe.fit(train["text"].tolist(), train["label"].to_numpy())
+    probs = pipe.predict_proba(test["text"].tolist())[:, 1]
+    return probs, evaluate(test["label"], probs)
 
-# --- Generalisation test v3 (only if a model trained on merged data is provided) ---
-# Use the topic that was left out of training, split into sentences as above.
-# held_out_df = df[df["topic"] == "Phones and driving"]
 
-# --- Error analysis: misclassified sentences from test v2 ---
-y_pred_sent = (y_prob_sent >= 0.5).astype(int)
-labels_arr = np.array(sent_labels)
-texts_arr = np.array(sent_texts, dtype=object)
+heldout = build_heldout_datasets(full_df, HELDOUT_FAMILY)
+test = heldout["test"]
+train_docs, _ = split_documents(full_df)
+train_seen = sample_sentences(train_docs, TRAIN_CAP_PER_CELL, MAX_SENTS_PER_DOC)
 
-false_positives = texts_arr[(labels_arr == 0) & (y_pred_sent == 1)]  # human predicted as AI
-false_negatives = texts_arr[(labels_arr == 1) & (y_pred_sent == 0)]  # AI predicted as human
-print(f"\nFalse positives: {len(false_positives)}")
-print(f"False negatives: {len(false_negatives)}")
+print(f"\nTest sentences: {len(test)}")
+_, m_seen = fit_and_score(train_seen, test)
+probs, m_unseen = fit_and_score(heldout["train"], test)
+print(f"Family seen in training:     {m_seen}")
+print(f"Family held out of training: {m_unseen}")
 
-# Random samples of each error type for manual inspection
+with open(f"heldout_family_{HELDOUT_FAMILY}.json", "w") as f:
+    json.dump({"heldout_family": HELDOUT_FAMILY, "seen": m_seen, "unseen": m_unseen}, f, indent=2)
+
+# --- Error analysis: misclassified sentences from the held-out model ---
+pred = (probs >= 0.5).astype(int)
+y = test["label"].to_numpy()
 rng = np.random.default_rng(42)
-print("\n=== FALSE POSITIVES (sample of 8) ===")
-for t in rng.choice(false_positives, size=min(8, len(false_positives)), replace=False):
-    print(t)
-    print("---")
-
-print("\n=== FALSE NEGATIVES (sample of 8) ===")
-for t in rng.choice(false_negatives, size=min(8, len(false_negatives)), replace=False):
-    print(t)
-    print("---")
+for title, mask in (("FALSE POSITIVES (human predicted as AI)", (y == 0) & (pred == 1)),
+                    ("FALSE NEGATIVES (AI predicted as human)", (y == 1) & (pred == 0))):
+    rows = test[mask]
+    print(f"\n=== {title}: {len(rows)} ===")
+    for i in rng.choice(len(rows), size=min(8, len(rows)), replace=False):
+        r = rows.iloc[i]
+        print(f"[{r['source']} / {r['generator']}] {r['text']}\n---")

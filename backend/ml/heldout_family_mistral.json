@@ -1,0 +1,43 @@
+{
+  "heldout_family": "mistral",
+  "seen": {
+    "accuracy": 0.903,
+    "precision_ai": 0.8758,
+    "recall_ai": 0.9393,
+    "f1_ai": 0.9064,
+    "roc_auc": 0.9708,
+    "brier_score": 0.0714,
+    "false_positive_rate": 0.1332,
+    "confusion_matrix": [
+      [
+        7537,
+        1158
+      ],
+      [
+        528,
+        8167
+      ]
+    ],
+    "n_test": 17390
+  },
+  "unseen": {
+    "accuracy": 0.8938,
+    "precision_ai": 0.8687,
+    "recall_ai": 0.928,
+    "f1_ai": 0.8974,
+    "roc_auc": 0.9638,
+    "brier_score": 0.078,
+    "false_positive_rate": 0.1403,
+    "confusion_matrix": [
+      [
+        7475,
+        1220
+      ],
+      [
+        626,
+        8069
+      ]
+    ],
+    "n_test": 17390
+  }
+}
