@@ -108,10 +108,6 @@ for cluster_id in sorted(ai_df["cluster"].unique()):
 
     print(f"Dominant source: {dominant_source}")
     print(f"Example: {example[:300]}")
-#Inspoect 5 documents xlosest to cluster 4 and get example
-    for t in ai_df[ai_df["cluster"] == 4].nsmallest(5, "dist_to_centre")["text"]:
-        print(t[:300])
-        print("---")
 
 # --- Step 8: Data quality check ---
 # Cross-checked Cluster 5 against source dataset: 1650/1652 essays (99.9%)
