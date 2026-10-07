@@ -69,7 +69,7 @@ print("Silhouette scores by K:", dict(zip(k_values, silhouette_scores)))
 
 # --- Step 6: Final clustering ---
 # K=6 chosen based on both methods:
-# - Elbow plot shows inertia improvement flattening from K~5 onward
+# - Elbow plot: the inertia drop roughly halves after K=6 (about 20,000 to 12,000)
 # - Among K=5,6,7 (the elbow's flat region), K=6 and K=7 tied for the
 #   highest silhouette score (0.187), so K=6 was picked as the simpler option
 final_k = 6
@@ -121,7 +121,7 @@ for cluster_id in sorted(ai_df["cluster"].unique()):
 print("\nCluster 5 source breakdown:")
 print(ai_df[ai_df["cluster"] == 5]["source"].value_counts())
 
-# Separately, found 6/586,217 rows (0.001%) with malformed "Passage N:" placeholder text, all from DAIGT_v2.
+# Separately, found 6 DAIGT_v2 texts with malformed "Passage N:" placeholder text; these are skipped when picking examples.
 suspicious = df[df["text"].str.contains(r"Passage \d+:", regex=True, na=False)]
 print(f"\nMalformed rows found: {len(suspicious)} ({len(suspicious)/len(df)*100:.4f}%)")
 print(suspicious["source"].value_counts())

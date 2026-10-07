@@ -85,7 +85,6 @@ python -m ml.predict --file essay.txt
 
 Or start the web app (see "Run it" above): `POST /api/v1/score`.
 
-**5. Clustering and held-out evaluation** 
 **5. Clustering, held-out evaluation and feature EDA** (Person C, `backend/ml/`)
 
 Both scripts read the merged dataset from `backend/ml/data/merged_dataset_v2.csv`
