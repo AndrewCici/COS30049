@@ -3,21 +3,25 @@ import logging
 import uuid
 from contextlib import asynccontextmanager
 
+import anyio
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.types import Receive, Scope, Send
 
 from . import config
 from .aggregate import bootstrap_ci, document_band, weighted_mean
 from .detectors import registry
+from .detectors.base import Detector
 from .model_integrity import ModelIntegrityError
 from .schemas import (BAND_THRESHOLDS, DocumentScore, ErrorResponse,
                       HealthResponse, InputLimits, Meta, ModelInfoResponse,
                       ScoreRequest, ScoreResponse, SentenceScore, band_for,
                       confidence_for, verdict_for)
+from .security.body_limit import BodySizeLimitMiddleware
+from .security.limiter import InferenceUnavailableError, inference_limiter
 from .sentences import split_sentences
 from .statistical_meta import load_meta
 
@@ -60,6 +64,13 @@ async def lifespan(app: FastAPI):
             logger.error("Statistical model failed its integrity check; "
                         "refusing to start.")
             raise
+    if not config.security_defences_enabled():
+        logger.warning(
+            "SECURITY_DEFENCES=off: body-size limit, sentence-count cap and "
+            "the inference concurrency limiter are all DISABLED. For "
+            "demonstrating the DoS attack scripts only; never run this in "
+            "production."
+        )
     yield
 
 
@@ -74,6 +85,16 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Registered innermost-first: add_middleware() builds a stack where the
+# LAST one added is OUTERMOST (runs first on the way in, last on the way
+# out). Desired order, outside in: request-id -> CORS -> body-size-limit ->
+# router. Putting the body-size check inside CORS (not outside it) means a
+# rejected oversized request still gets CORS headers on its 413 response,
+# so a browser can actually read it instead of reporting an opaque network
+# error; putting request-id outermost means its X-Request-ID / request_id
+# are available to every layer under it, including the body-size rejection.
+app.add_middleware(BodySizeLimitMiddleware)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[config.FRONTEND_ORIGIN],
@@ -83,16 +104,32 @@ app.add_middleware(
 )
 
 
-class RequestIDMiddleware(BaseHTTPMiddleware):
+class RequestIDMiddleware:
     """Tags every request/response with a UUID so a client-reported problem
-    can be matched to the corresponding server-side log line."""
+    can be matched to the corresponding server-side log line. Pure ASGI (not
+    BaseHTTPMiddleware) so it sets `scope["state"]` directly, and inner
+    middleware -- notably BodySizeLimitMiddleware, which never gets to build
+    a Starlette `Request` -- can read the same request_id."""
 
-    async def dispatch(self, request: Request, call_next):
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
         request_id = str(uuid.uuid4())
-        request.state.request_id = request_id
-        response = await call_next(request)
-        response.headers["X-Request-ID"] = request_id
-        return response
+        scope.setdefault("state", {})["request_id"] = request_id
+
+        async def send_with_header(message):
+            if message["type"] == "http.response.start":
+                headers = list(message.get("headers", []))
+                headers.append((b"x-request-id", request_id.encode()))
+                message = {**message, "headers": headers}
+            await send(message)
+
+        await self.app(scope, receive, send_with_header)
 
 
 app.add_middleware(RequestIDMiddleware)
@@ -149,7 +186,12 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 _ERROR_RESPONSES = {
     413: {"model": ErrorResponse, "description": "Request body too large."},
     422: {"model": ErrorResponse, "description": "Invalid input."},
-    503: {"model": ErrorResponse, "description": "No detection method is available."},
+    503: {
+        "model": ErrorResponse,
+        "description": "No detection method is available, or the server is "
+                       "under heavy load (inference queue full or timed "
+                       "out). May carry a Retry-After header.",
+    },
     500: {"model": ErrorResponse, "description": "Unexpected server error."},
 }
 
@@ -161,9 +203,12 @@ _ERROR_RESPONSES = {
     summary="Service and detector availability",
     description="Reports which detection method is currently active and "
                 "which methods are available, without triggering a model "
-                "download. Used to drive a status indicator in the UI.",
+                "download. Used to drive a status indicator in the UI. "
+                "Defined as a plain `async def` and never touches the "
+                "inference concurrency limiter, so it stays responsive even "
+                "while /score is under heavy load.",
 )
-def health() -> HealthResponse:
+async def health() -> HealthResponse:
     detector, _ = registry.resolve()
     avail = registry.availability()
     return HealthResponse(
@@ -205,6 +250,26 @@ def model_info() -> ModelInfoResponse:
     )
 
 
+async def _run_inference(detector: Detector, texts: list[str]) -> list[float]:
+    """Runs the (synchronous, CPU-bound) detector off the event loop, with a
+    timeout as a backstop. The timeout bounds how long the caller waits, not
+    how long the worker thread actually runs -- Python cannot forcibly kill a
+    thread -- so `abandon_on_cancel` lets a timed-out call stop occupying a
+    concurrency slot immediately rather than holding it hostage until the
+    orphaned thread eventually finishes."""
+    try:
+        with anyio.fail_after(config.INFERENCE_TIMEOUT_S):
+            return await anyio.to_thread.run_sync(
+                detector.score_sentences, texts, abandon_on_cancel=True
+            )
+    except TimeoutError as exc:
+        raise ApiError(
+            503, "INFERENCE_TIMEOUT",
+            "Scoring took too long and was aborted. Try a shorter passage.",
+            headers={"Retry-After": "2"},
+        ) from exc
+
+
 @app.post(
     "/api/v1/score",
     response_model=ScoreResponse,
@@ -213,10 +278,12 @@ def model_info() -> ModelInfoResponse:
     description="Splits the passage into sentences, scores each with the "
                 "active detector, and aggregates them into a length-"
                 "weighted document score with a 95% bootstrap confidence "
-                "interval and a binary verdict.",
+                "interval and a binary verdict. Under heavy concurrent load "
+                "this may return 503 with a Retry-After header instead of "
+                "queuing indefinitely (see security/dos/README.md).",
     responses=_ERROR_RESPONSES,
 )
-def score(req: ScoreRequest) -> ScoreResponse:
+async def score(req: ScoreRequest) -> ScoreResponse:
     sents = split_sentences(req.text)
     if not sents:
         raise ApiError(
@@ -224,7 +291,7 @@ def score(req: ScoreRequest) -> ScoreResponse:
             "No sentences found. Paste at least one full English sentence "
             "and try again.",
         )
-    if len(sents) > config.MAX_SENTENCES:
+    if config.security_defences_enabled() and len(sents) > config.MAX_SENTENCES:
         raise ApiError(
             422, "TOO_MANY_SENTENCES",
             f"Text has {len(sents)} sentences; the limit is "
@@ -236,7 +303,16 @@ def score(req: ScoreRequest) -> ScoreResponse:
     except RuntimeError as exc:
         raise ApiError(503, "DETECTOR_UNAVAILABLE", str(exc)) from exc
 
-    raw_scores = detector.score_sentences([s.text for s in sents])
+    try:
+        async with inference_limiter.slot():
+            raw_scores = await _run_inference(detector, [s.text for s in sents])
+    except InferenceUnavailableError as exc:
+        raise ApiError(
+            503, "INFERENCE_QUEUE_FULL",
+            "The server is handling too many scoring requests right now. "
+            "Try again shortly.",
+            headers={"Retry-After": str(exc.retry_after_s)},
+        ) from exc
     raw_scores = [min(max(s, 0.0), 1.0) for s in raw_scores]
 
     sentence_scores = [

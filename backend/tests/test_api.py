@@ -80,7 +80,9 @@ def test_no_sentences_rejected():
 
 
 def test_too_long_rejected():
-    r = client.post("/api/v1/score", json={"text": "word " * 20000})
+    # Long enough to fail MAX_TEXT_CHARS, short enough to stay under the
+    # body-size limit (see test_dos_defences.py for that boundary).
+    r = client.post("/api/v1/score", json={"text": "word " * 3000})
     assert r.status_code == 422
 
 

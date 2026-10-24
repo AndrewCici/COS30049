@@ -12,3 +12,6 @@ pydantic==2.13.4
 numpy==2.4.6
 scikit-learn==1.9.0
 joblib==1.5.3
+# Used directly (off-event-loop inference, the concurrency limiter): not
+# just a transitive dependency of fastapi/starlette, so pinned explicitly.
+anyio==4.14.2

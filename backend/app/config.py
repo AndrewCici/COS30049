@@ -19,6 +19,11 @@ def _bool_env(name: str, default: bool = False) -> bool:
     return value == "1"
 
 
+def _float_env(name: str, default: float) -> float:
+    value = os.environ.get(name)
+    return float(value) if value else default
+
+
 # Character bounds on the raw request text. 12,000 chars (~2,000 words) is
 # comfortably above a multi-paragraph essay while bounding sentence-splitting
 # and bootstrap-CI cost (see security/dos/measure_cost.py); 20 chars is
@@ -43,3 +48,32 @@ FRONTEND_ORIGIN = os.environ.get("FRONTEND_ORIGIN", "http://localhost:5173")
 # existing AIDETECT_METHOD / AIDETECT_ALLOW_MOCK switches are read live.
 def enable_hf() -> bool:
     return _bool_env("AIDETECT_ENABLE_HF")
+
+
+# --- Denial-of-service defences (see security/dos/README.md) --------------
+
+# A legitimate request never needs more than MAX_TEXT_CHARS of JSON-encoded
+# text; 64 KiB leaves headroom for JSON overhead and multi-byte UTF-8 while
+# still being small enough that reading it costs nothing measurable.
+MAX_BODY_BYTES = _int_env("AIDETECT_MAX_BODY_BYTES", 64 * 1024)
+
+# Inference runs in a worker thread (see app.main._run_inference); CPython's
+# GIL means many such threads contend rather than run in parallel, so
+# bounding true concurrency protects per-request latency instead of letting
+# everyone slow down together. Requests beyond the concurrent+queued
+# capacity fail fast with 503 rather than queuing indefinitely.
+MAX_CONCURRENT_INFERENCES = _int_env("AIDETECT_MAX_CONCURRENT_INFERENCES", 2)
+MAX_QUEUED_INFERENCES = _int_env("AIDETECT_MAX_QUEUED_INFERENCES", 8)
+QUEUE_TIMEOUT_S = _float_env("AIDETECT_QUEUE_TIMEOUT_S", 2.0)
+
+# Backstop only: bounds how long a client waits for one inference call, not
+# how long the underlying worker thread actually runs (Python cannot forcibly
+# kill a thread). The real bound on per-request cost is MAX_SENTENCES.
+INFERENCE_TIMEOUT_S = _float_env("AIDETECT_INFERENCE_TIMEOUT_S", 10.0)
+
+
+def security_defences_enabled() -> bool:
+    """False only when SECURITY_DEFENCES=off — a demo-only escape hatch for
+    recording what the DoS attack scripts do against an undefended server.
+    A function, read live, so it can be toggled per request/test."""
+    return os.environ.get("SECURITY_DEFENCES", "on").strip().lower() != "off"
