@@ -1,0 +1,8 @@
+# Extra dependencies needed to run backend/ml/train.py and the other ml/
+# scripts (evaluation, clustering, EDA). Install on top of requirements.txt:
+#   pip install -r requirements.txt -r requirements-train.txt
+-r requirements.txt
+pandas==3.0.5
+xgboost==3.2.0
+matplotlib==3.11.2
+datasets==5.0.1

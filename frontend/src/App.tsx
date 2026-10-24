@@ -170,10 +170,13 @@ export default function App() {
                   confidence interval estimated by resampling.
                 </Typography>
                 <Typography variant="body2" sx={{ mb: 2 }}>
-                  The primary model is a RoBERTa transformer fine-tuned on
-                  human vs. ChatGPT answers (HC3). If it is unavailable, an
-                  offline statistical model answers instead and a notice is
-                  shown.
+                  By default, scoring uses a locally trained statistical
+                  model (TF-IDF and stylometric features with a logistic
+                  regression classifier), which needs no network access. A
+                  pretrained RoBERTa transformer is available as an opt-in
+                  alternative on the server; when it is enabled but
+                  unavailable, the statistical model answers instead and a
+                  notice is shown.
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
                   Limitations

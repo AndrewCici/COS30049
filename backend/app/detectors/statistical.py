@@ -8,11 +8,13 @@ the frozen artifact and predicts.
 import json
 from pathlib import Path
 
+from ..model_integrity import verify_sha256
 from .base import Detector
 
 MODEL_DIR = Path(__file__).resolve().parents[2] / "models"
 MODEL_PATH = MODEL_DIR / "statistical_model.joblib"
 META_PATH = MODEL_DIR / "statistical_model.meta.json"
+HASH_PATH = MODEL_DIR / "statistical_model.sha256"
 
 
 class StatisticalDetector(Detector):
@@ -32,6 +34,14 @@ class StatisticalDetector(Detector):
             import joblib  # deferred so probing availability stays cheap
             self._pipeline = joblib.load(MODEL_PATH)
         return self._pipeline
+
+    def load_verified(self):
+        """Load the pipeline, first checking its SHA-256 against the
+        committed hash file. Called once at app startup so a corrupted or
+        tampered model file is caught before any request is served."""
+        if self._pipeline is None:
+            verify_sha256(MODEL_PATH, HASH_PATH)
+        return self._load()
 
     def available(self) -> bool:
         return MODEL_PATH.exists()

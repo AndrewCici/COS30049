@@ -1,7 +1,14 @@
 """Detector registry and fallback chain.
 
+`statistical` (the Assignment 2 logistic-regression model) is the default
+and only detector in a standard install: it is small, needs no network or
+GPU, and is loaded once at startup (see app.main's lifespan). The pretrained
+HF transformer is opt-in via `AIDETECT_ENABLE_HF=1` — it needs torch and
+transformers (requirements-optional.txt) and a ~500MB download, so it must
+never be required just to run the app.
+
 Resolution order (configurable via AIDETECT_METHOD):
-    hf-transformer  →  statistical  →  mock (only if AIDETECT_ALLOW_MOCK=1)
+    [hf-transformer, if enabled] -> statistical -> [mock, if AIDETECT_ALLOW_MOCK=1]
 
 The chain is resolved lazily per process and re-probed only when the cached
 choice becomes unavailable, so the common path costs nothing. The resolved
@@ -10,6 +17,7 @@ must be able to tell the user which model actually answered.
 """
 import os
 
+from ..config import enable_hf
 from .base import Detector
 from .hf_detector import HFDetector
 from .mock import MockDetector
@@ -26,11 +34,18 @@ def _instances() -> dict[str, Detector]:
     return _detectors
 
 
+def get(name: str) -> Detector:
+    return _instances()[name]
+
+
 def preferred_order() -> list[str]:
     forced = os.environ.get("AIDETECT_METHOD")
     if forced:
         return [forced]
-    order = ["hf-transformer", "statistical"]
+    order = []
+    if enable_hf():
+        order.append("hf-transformer")
+    order.append("statistical")
     if os.environ.get("AIDETECT_ALLOW_MOCK") == "1":
         order.append("mock")
     return order
@@ -52,8 +67,14 @@ def resolve() -> tuple[Detector, bool]:
 
 
 def availability() -> dict[str, bool]:
+    """Status per detector, for /health. hf-transformer is reported only
+    when it is actually opted in (AIDETECT_ENABLE_HF=1) — otherwise it is
+    unreachable regardless of whether weights happen to be cached, so
+    listing it as 'available' would be misleading."""
     out = {}
     for name, det in _instances().items():
+        if name == "hf-transformer" and not enable_hf():
+            continue
         # Prefer a cheap probe (e.g. HF cache check) so /health never
         # triggers a model download.
         probe = getattr(det, "cached_locally", None) or det.available

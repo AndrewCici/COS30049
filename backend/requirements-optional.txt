@@ -1,0 +1,6 @@
+# The opt-in primary detector (pretrained RoBERTa transformer). Not needed
+# to run the app with its default statistical detector. Install on top of
+# requirements.txt and set AIDETECT_ENABLE_HF=1:
+#   pip install -r requirements.txt -r requirements-optional.txt
+torch==2.13.0
+transformers==5.15.1
