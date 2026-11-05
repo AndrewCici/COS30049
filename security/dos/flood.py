@@ -7,7 +7,9 @@ response and latency percentiles.
 With the concurrency limiter on, most requests beyond its capacity
 (MAX_CONCURRENT_INFERENCES + MAX_QUEUED) should fail fast with 503 instead
 of queuing indefinitely, and the ones that do run should stay close to their
-solo latency. With it off, expect far more 200s but with latency growing
+solo latency. Throughout the flood a separate client polls /health every
+50ms, as a witness for "other users": it shows whether the rest of the
+service still answers promptly while /score is under attack. With it off, expect far more 200s but with latency growing
 with N, since CPython's GIL serialises the CPU-bound inference work across
 however many threads are actually running it.
 
@@ -15,8 +17,8 @@ Usage:
     python security/dos/flood.py --base-url http://localhost:8000 -n 200 --label defences_on
     python security/dos/flood.py -n 200 --label defences_off
 
-Requires a running backend. Writes a CSV of every response and a PNG plot
-to security/dos/results/.
+Requires a running backend. Writes a CSV of every /score response, a CSV of
+every /health probe, and a PNG plot to security/dos/results/.
 """
 from __future__ import annotations
 
@@ -63,10 +65,36 @@ async def one_request(client: httpx.AsyncClient, base_url: str, i: int) -> Resul
                  latency_ms=(time.perf_counter() - t0) * 1000)
 
 
-async def run(base_url: str, n: int) -> list[Result]:
+HEALTH_PROBE_INTERVAL_S = 0.05
+
+
+async def probe_health(base_url: str, stop: asyncio.Event) -> list[tuple[float, int | None, float]]:
+    """Polls /health on its own connection until `stop` is set. Returns
+    (seconds since start, status, latency ms) per probe."""
+    probes: list[tuple[float, int | None, float]] = []
+    start = time.perf_counter()
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        while not stop.is_set():
+            t0 = time.perf_counter()
+            try:
+                status = (await client.get(f"{base_url}/api/v1/health")).status_code
+            except httpx.HTTPError:
+                status = None
+            probes.append((t0 - start, status, (time.perf_counter() - t0) * 1000))
+            await asyncio.sleep(HEALTH_PROBE_INTERVAL_S)
+    return probes
+
+
+async def run(base_url: str, n: int) -> tuple[list[Result], list[tuple[float, int | None, float]]]:
+    stop = asyncio.Event()
+    prober = asyncio.create_task(probe_health(base_url, stop))
+    # Let the prober record a few unloaded baseline samples first.
+    await asyncio.sleep(0.3)
     async with httpx.AsyncClient(timeout=60.0) as client:
         tasks = [one_request(client, base_url, i) for i in range(n)]
-        return await asyncio.gather(*tasks)
+        results = await asyncio.gather(*tasks)
+    stop.set()
+    return results, await prober
 
 
 def percentiles(values: list[float]) -> dict[str, float]:
@@ -88,6 +116,15 @@ def write_csv(path: Path, results: list[Result]) -> None:
         for r in results:
             writer.writerow([r.i, r.status, r.error_code or "", r.retry_after or "",
                             f"{r.latency_ms:.2f}"])
+
+
+def write_health_csv(path: Path, probes: list[tuple[float, int | None, float]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="") as fh:
+        writer = csv.writer(fh)
+        writer.writerow(["t_s", "status", "latency_ms"])
+        for t, status, lat in probes:
+            writer.writerow([f"{t:.3f}", status, f"{lat:.2f}"])
 
 
 def plot(results: list[Result], out_path: Path) -> None:
@@ -131,7 +168,7 @@ def main() -> None:
     ap.add_argument("--label", default="run")
     args = ap.parse_args()
 
-    results = asyncio.run(run(args.base_url, args.n))
+    results, probes = asyncio.run(run(args.base_url, args.n))
 
     counts: dict[str, int] = {}
     for r in results:
@@ -146,9 +183,19 @@ def main() -> None:
     print(f"Latency (200s): {percentiles(ok_lat)}" if ok_lat else "Latency (200s): none succeeded")
     if all_lat:
         print(f"mean={statistics.mean(all_lat):.1f}ms max={max(all_lat):.1f}ms")
+    served = counts.get("200", 0)
+    print(f"Served: {served} of {args.n}; rejected with 503: {counts.get('503', 0)} of {args.n}")
+
+    health_lat = [lat for _, status, lat in probes if status == 200]
+    health_failed = sum(1 for _, status, _ in probes if status != 200)
+    hp = percentiles(health_lat)
+    print(f"/health during flood: {len(probes)} probes, {health_failed} failed, "
+          f"p50={hp['p50']:.1f}ms p95={hp['p95']:.1f}ms "
+          f"max={max(health_lat, default=0.0):.1f}ms")
 
     stem = f"flood_n{args.n}_{args.label}"
     write_csv(RESULTS / f"{stem}.csv", results)
+    write_health_csv(RESULTS / f"{stem}_health.csv", probes)
     plot(results, RESULTS / f"{stem}.png")
 
 

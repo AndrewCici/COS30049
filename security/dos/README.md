@@ -160,6 +160,23 @@ isolation. The limiter doesn't make the server handle more total work; it
 decides *who* pays the cost of overload — a fast, explicit "no" to most
 callers, rather than a slow "yes" to all of them.
 
+### `/health` as a witness during the flood
+
+`flood.py` also polls `/health` every 50ms on a separate connection while the
+200 requests are in flight, so the effect on *other* users is measured rather
+than assumed. Run on a 2-vCPU Linux x86_64 machine, Python 3.13
+(`results/flood_n200_defences_{on,off}_with_health_probe*.csv` and `.png`):
+
+| Defences | `/score` served | `/health` probes | `/health` p50 / p95 / max |
+|---|---|---|---|
+| on | 20 of 200 (180 × `503`) | 12, 0 failed | 19.0 / 117.3 / 117.3ms |
+| off | 200 of 200 | 40, 0 failed | 38.1 / 447.7 / 582.7ms |
+
+Without the limiter the flood also lasts about five seconds instead of under
+one, so the health check is both slower and slowed for longer. The limiter
+keeps the rest of the service responsive by refusing work it cannot do
+promptly; the price is the 180 clients that received `503`.
+
 ## Reproduction
 
 From the repository root, with `backend/requirements.txt` and
@@ -172,7 +189,7 @@ cd backend && ../.venv/bin/uvicorn app.main:app --port 8000
 python security/dos/measure_cost.py
 python security/dos/expensive_request.py --scenario sentence-flood --label defences_on
 python security/dos/expensive_request.py --scenario oversized-body --label defences_on
-python security/dos/flood.py -n 200 --label defences_on
+python security/dos/flood.py -n 200 --label defences_on   # also prints the /health witness line
 
 # Undefended (demo only)
 cd backend && SECURITY_DEFENCES=off ../.venv/bin/uvicorn app.main:app --port 8000
