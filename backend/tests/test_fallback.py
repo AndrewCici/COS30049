@@ -76,3 +76,13 @@ def test_statistical_is_the_unflagged_default_not_a_fallback(monkeypatch):
     meta = r.json()["meta"]
     assert meta["method"] == "statistical"
     assert meta["fallback_used"] is False
+
+
+def test_health_lists_only_detectors_in_the_chain(monkeypatch):
+    monkeypatch.delenv("AIDETECT_METHOD", raising=False)
+    monkeypatch.delenv("AIDETECT_ALLOW_MOCK", raising=False)
+    monkeypatch.delenv("AIDETECT_ENABLE_HF", raising=False)
+    from app.detectors import registry
+    assert set(registry.availability()) == {"statistical"}
+    monkeypatch.setenv("AIDETECT_ALLOW_MOCK", "1")
+    assert set(registry.availability()) == {"statistical", "mock"}

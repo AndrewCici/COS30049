@@ -157,14 +157,43 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     )
 
 
+def _validation_message(error: dict) -> str:
+    """One plain-English sentence for the first Pydantic error.
+
+    Pydantic's raw messages are written for developers ("String should have
+    at least 20 characters", "Value error, ...") and, for a malformed body,
+    name a byte offset instead of a field. The UI shows this text verbatim,
+    so the common cases are rephrased; anything else falls back to
+    Pydantic's own wording prefixed with the field name.
+    """
+    err_type = error.get("type", "")
+    ctx = error.get("ctx") or {}
+    field = ".".join(str(p) for p in error.get("loc", ()) if p != "body")
+
+    if err_type == "json_invalid":
+        return "The request body is not valid JSON."
+    if err_type == "missing":
+        return f"The '{field}' field is required."
+    if err_type == "string_type":
+        return f"The '{field}' field must be a string."
+    if err_type == "string_too_short":
+        return f"The text is too short: enter at least {ctx.get('min_length')} characters."
+    if err_type == "string_too_long":
+        return f"The text is too long: the limit is {ctx.get('max_length'):,} characters."
+    if err_type == "value_error":
+        # Our own validators raise ValueError with a finished sentence;
+        # Pydantic prepends "Value error, " to it.
+        return str(error.get("msg", "")).removeprefix("Value error, ")
+    message = error.get("msg", "Invalid input.")
+    return f"{field}: {message}" if field else message
+
+
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    first = exc.errors()[0]
-    field = ".".join(str(p) for p in first["loc"] if p != "body")
-    message = f"{field}: {first['msg']}" if field else first["msg"]
     return JSONResponse(
         status_code=422,
-        content=_error_body("VALIDATION_ERROR", message, _request_id(request)),
+        content=_error_body("VALIDATION_ERROR", _validation_message(exc.errors()[0]),
+                            _request_id(request)),
     )
 
 
@@ -174,25 +203,63 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     # The traceback is logged server-side, keyed by request_id, and never
     # returned to the client.
     logger.exception("Unhandled error [request_id=%s]", request_id)
+    # Starlette sends this response from its outermost error middleware,
+    # which sits outside CORSMiddleware, so the CORS header is added here by
+    # hand. Without it the browser hides the body and the front end can only
+    # report a network failure instead of this message.
+    headers = {"Vary": "Origin"}
+    if request.headers.get("origin") == config.FRONTEND_ORIGIN:
+        headers["Access-Control-Allow-Origin"] = config.FRONTEND_ORIGIN
     return JSONResponse(
         status_code=500,
         content=_error_body(
             "INTERNAL_ERROR", "An unexpected error occurred. Please try again.",
             request_id,
         ),
+        headers=headers,
     )
 
 
+def _error_example(code: str, message: str) -> dict:
+    """OpenAPI example body in the shared error envelope."""
+    return {"application/json": {"example": _error_body(
+        code, message, "3f2b8c1e-6a4d-4e0f-9b7a-2c5d8e1f0a93")}}
+
+
 _ERROR_RESPONSES = {
-    413: {"model": ErrorResponse, "description": "Request body too large."},
-    422: {"model": ErrorResponse, "description": "Invalid input."},
+    413: {
+        "model": ErrorResponse,
+        "description": "Request body too large; rejected before it is read.",
+        "content": _error_example(
+            "PAYLOAD_TOO_LARGE", "Request body exceeds the 65536-byte limit."),
+    },
+    422: {
+        "model": ErrorResponse,
+        "description": "Invalid input: malformed JSON, missing or non-string "
+                       "`text`, text outside the character limits, "
+                       "whitespace only, no sentences, or too many sentences.",
+        "content": _error_example(
+            "VALIDATION_ERROR",
+            "The text is too short: enter at least 20 characters."),
+    },
     503: {
         "model": ErrorResponse,
         "description": "No detection method is available, or the server is "
                        "under heavy load (inference queue full or timed "
-                       "out). May carry a Retry-After header.",
+                       "out). Carries a Retry-After header when load is the "
+                       "cause.",
+        "content": _error_example(
+            "INFERENCE_QUEUE_FULL",
+            "The server is handling too many scoring requests right now. "
+            "Try again shortly."),
     },
-    500: {"model": ErrorResponse, "description": "Unexpected server error."},
+    500: {
+        "model": ErrorResponse,
+        "description": "Unexpected server error. Details are logged "
+                       "server-side under the request_id, never returned.",
+        "content": _error_example(
+            "INTERNAL_ERROR", "An unexpected error occurred. Please try again."),
+    },
 }
 
 

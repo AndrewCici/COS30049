@@ -67,13 +67,16 @@ def resolve() -> tuple[Detector, bool]:
 
 
 def availability() -> dict[str, bool]:
-    """Status per detector, for /health. hf-transformer is reported only
-    when it is actually opted in (AIDETECT_ENABLE_HF=1) — otherwise it is
-    unreachable regardless of whether weights happen to be cached, so
-    listing it as 'available' would be misleading."""
+    """Status per detector in the active resolution chain, for /health.
+
+    Only detectors that resolve() could actually choose are reported: the
+    mock (unless AIDETECT_ALLOW_MOCK=1) and the HF transformer (unless
+    AIDETECT_ENABLE_HF=1) are unreachable, so listing them as 'available'
+    would misdescribe what can answer a request."""
     out = {}
-    for name, det in _instances().items():
-        if name == "hf-transformer" and not enable_hf():
+    for name in preferred_order():
+        det = _instances().get(name)
+        if det is None:
             continue
         # Prefer a cheap probe (e.g. HF cache check) so /health never
         # triggers a model download.

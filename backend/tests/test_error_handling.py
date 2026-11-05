@@ -88,3 +88,47 @@ def test_disallowed_cors_origin_gets_no_cors_header():
 def test_allowed_cors_origin_gets_cors_header():
     r = client.get("/api/v1/health", headers={"Origin": "http://localhost:5173"})
     assert r.headers.get("access-control-allow-origin") == "http://localhost:5173"
+
+
+def test_malformed_json_gets_plain_message():
+    r = client.post("/api/v1/score", content=b'{"text":',
+                    headers={"Content-Type": "application/json"})
+    assert r.status_code == 422
+    _assert_error_envelope(r.json(), code="VALIDATION_ERROR")
+    assert r.json()["error"]["message"] == "The request body is not valid JSON."
+
+
+def test_validator_message_has_no_pydantic_prefix():
+    r = client.post("/api/v1/score", json={"text": " " * 25})
+    message = r.json()["error"]["message"]
+    assert not message.startswith("Value error")
+    assert message == "Text must contain more than whitespace."
+
+
+def test_length_messages_state_the_limit():
+    short = client.post("/api/v1/score", json={"text": "short"}).json()
+    assert "at least 20 characters" in short["error"]["message"]
+    long = client.post("/api/v1/score", json={"text": "a" * 12_001}).json()
+    assert "12,000 characters" in long["error"]["message"]
+
+
+def test_missing_field_names_the_field():
+    r = client.post("/api/v1/score", json={})
+    assert r.json()["error"]["message"] == "The 'text' field is required."
+
+
+def test_forced_500_keeps_cors_header_for_allowed_origin(monkeypatch):
+    def boom(*args, **kwargs):
+        raise ValueError("synthetic failure for the test")
+
+    monkeypatch.setattr("app.main.split_sentences", boom)
+    no_raise_client = TestClient(app, raise_server_exceptions=False)
+    allowed = no_raise_client.post(
+        "/api/v1/score", json={"text": "A perfectly normal sentence here."},
+        headers={"Origin": "http://localhost:5173"})
+    assert allowed.status_code == 500
+    assert allowed.headers.get("access-control-allow-origin") == "http://localhost:5173"
+    other = no_raise_client.post(
+        "/api/v1/score", json={"text": "A perfectly normal sentence here."},
+        headers={"Origin": "http://evil.example.com"})
+    assert "access-control-allow-origin" not in {k.lower() for k in other.headers}
