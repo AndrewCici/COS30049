@@ -6,7 +6,7 @@
 // hover/focus. Colours also differ in luminance for colour-vision
 // deficiency, and all pass ≥4.5:1 contrast with the #1a1a1a text on them.
 
-import type { Band, DocumentBand } from './types';
+import type { Band, DocumentBand, Verdict } from './types';
 
 export interface BandStyle {
   label: string;
@@ -59,3 +59,14 @@ export const DOC_BAND_LABEL: Record<DocumentBand, string> = {
 export function sentenceAriaLabel(band: Band, score: number): string {
   return `${BAND_STYLES[band].label}, AI probability ${(score * 100).toFixed(0)}%`;
 }
+
+export interface VerdictStyle {
+  label: string;
+  color: string;
+  background: string;
+}
+
+export const VERDICT_STYLES: Record<Verdict, VerdictStyle> = {
+  'ai-generated': { label: 'Likely AI-generated', color: '#c0392b', background: '#f6c8c4' },
+  'human-made': { label: 'Likely human-made', color: '#2e7d32', background: '#d8efd8' },
+};
