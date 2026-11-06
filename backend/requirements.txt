@@ -1,18 +1,17 @@
-fastapi>=0.115
-uvicorn[standard]>=0.30
-pydantic>=2.7
-numpy>=1.26
+# Runtime dependencies for the FastAPI service with its default detector
+# (the locally trained statistical model only). Every version is pinned
+# exactly; resolved from a clean virtual environment on Python 3.13.
+#
+# Other dependency groups, installed on top of this one when needed:
+#   requirements-dev.txt      tests and the security audit tool
+#   requirements-train.txt    backend/ml/train.py and the other ml/ scripts
+#   requirements-optional.txt the opt-in HF transformer detector (AIDETECT_ENABLE_HF=1)
+fastapi==0.141.1
+uvicorn[standard]==0.52.4
+pydantic==2.13.4
+numpy==2.4.6
 scikit-learn==1.9.0
-joblib>=1.4
-# primary detector
-torch>=2.3
-transformers>=4.44
-# training (and inference if xgboost is the final model)
-xgboost>=2.0
-pandas>=2.0
-matplotlib>=3.8
-# training only
-datasets>=2.20
-# tests
-pytest>=8.2
-httpx>=0.27
+joblib==1.5.3
+# Used directly (off-event-loop inference, the concurrency limiter): not
+# just a transitive dependency of fastapi/starlette, so pinned explicitly.
+anyio==4.14.2

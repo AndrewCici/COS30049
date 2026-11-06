@@ -1,0 +1,102 @@
+{
+  "clean_test_set": {
+    "n": 14556,
+    "undefended": {
+      "accuracy": 0.9005221214619401,
+      "precision": 0.8860792155850858,
+      "recall": 0.9239876227633527,
+      "f1": 0.9046364594309799,
+      "false_positive_rate": 0.12396462164818195,
+      "n": 14556
+    },
+    "defended": {
+      "accuracy": 0.9004534212695795,
+      "precision": 0.8860645161290323,
+      "recall": 0.9238530875824028,
+      "f1": 0.9045643153526971,
+      "false_positive_rate": 0.12396462164818195,
+      "n": 14556
+    }
+  },
+  "normalise_latency_ms": {
+    "p50": 0.07737497799098492,
+    "p95": 0.3572080750018358,
+    "p99": 0.8124581072479486,
+    "max": 19.245499977841973
+  },
+  "vietnamese_diacritics": {
+    "all_unchanged": true,
+    "sentences": [
+      {
+        "text": "Tiếng Việt rất hay.",
+        "unchanged": true,
+        "combining_marks_removed": 0,
+        "confusables_mapped": 0,
+        "cf_removed": 0
+      },
+      {
+        "text": "Hôm nay trời đẹp và nắng ấm.",
+        "unchanged": true,
+        "combining_marks_removed": 0,
+        "confusables_mapped": 0,
+        "cf_removed": 0
+      },
+      {
+        "text": "Tôi đang học lập trình máy tính.",
+        "unchanged": true,
+        "combining_marks_removed": 0,
+        "confusables_mapped": 0,
+        "cf_removed": 0
+      },
+      {
+        "text": "Cô ấy thích đọc sách vào buổi tối.",
+        "unchanged": true,
+        "combining_marks_removed": 0,
+        "confusables_mapped": 0,
+        "cf_removed": 0
+      },
+      {
+        "text": "Chúng tôi sẽ đi du lịch Đà Lạt vào tuần sau.",
+        "unchanged": true,
+        "combining_marks_removed": 0,
+        "confusables_mapped": 0,
+        "cf_removed": 0
+      },
+      {
+        "text": "Anh ấy làm việc chăm chỉ để nuôi gia đình.",
+        "unchanged": true,
+        "combining_marks_removed": 0,
+        "confusables_mapped": 0,
+        "cf_removed": 0
+      },
+      {
+        "text": "Những bông hoa trong vườn nở rộ vào mùa xuân.",
+        "unchanged": true,
+        "combining_marks_removed": 0,
+        "confusables_mapped": 0,
+        "cf_removed": 0
+      },
+      {
+        "text": "Bài kiểm tra ngày mai rất quan trọng đối với tôi.",
+        "unchanged": true,
+        "combining_marks_removed": 0,
+        "confusables_mapped": 0,
+        "cf_removed": 0
+      },
+      {
+        "text": "Cảm ơn bạn đã giúp đỡ tôi rất nhiều.",
+        "unchanged": true,
+        "combining_marks_removed": 0,
+        "confusables_mapped": 0,
+        "cf_removed": 0
+      },
+      {
+        "text": "Thành phố Hồ Chí Minh về đêm rất nhộn nhịp.",
+        "unchanged": true,
+        "combining_marks_removed": 0,
+        "confusables_mapped": 0,
+        "cf_removed": 0
+      }
+    ]
+  }
+}

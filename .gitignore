@@ -22,3 +22,14 @@ dataprep/*.jsonl
 dataprep/archive/
 dataprep/eda_plots/
 backend/ml/_smoke/
+submission/
+
+# Private team working files -- never committed. See the history note in
+# scripts/make_submission_zip.sh's FORBIDDEN_PATHS for why these must
+# never reappear here.
+docs/VIDEO_SCRIPT.md
+docs/DEMO_RUNBOOK.md
+docs/REQUIREMENTS_CHECKLIST.md
+CLAUDE.md
+AGENTS.md
+.claude/

@@ -1,0 +1,58 @@
+
+Headers are controlled by the SECURITY_DEFENCES env var on the running server -- this script only sends requests and prints what comes back.
+
+=== Current server (whatever SECURITY_DEFENCES it was started with) ===
+
+-- GET /api/v1/health (200) --
+HTTP/1.1 200 OK
+date: Fri, 06 Nov 2026 07:09:40 GMT
+content-length: 81
+content-type: application/json
+x-request-id: 39c8d5a9-308b-4559-b633-e082b76c6f74
+x-content-type-options: nosniff
+referrer-policy: no-referrer
+x-frame-options: DENY
+permissions-policy: geolocation=(), camera=(), microphone=(), payment=()
+cross-origin-resource-policy: same-site
+content-security-policy: default-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+
+
+-- POST /api/v1/score (422, text too short) --
+HTTP/1.1 422 Unprocessable Entity
+date: Fri, 06 Nov 2026 07:09:40 GMT
+content-length: 154
+content-type: application/json
+x-request-id: cbc01b0e-0225-4a19-bc04-ddf38f742412
+x-content-type-options: nosniff
+referrer-policy: no-referrer
+x-frame-options: DENY
+permissions-policy: geolocation=(), camera=(), microphone=(), payment=()
+cross-origin-resource-policy: same-site
+content-security-policy: default-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+cache-control: no-store
+
+
+-- POST /api/v1/score (413, oversized body) --
+HTTP/1.1 413 Request Entity Too Large
+date: Fri, 06 Nov 2026 07:09:40 GMT
+content-type: application/json
+content-length: 151
+x-request-id: 3c1dcf3e-93e7-49c6-b592-dc41b43afcd3
+x-content-type-options: nosniff
+referrer-policy: no-referrer
+x-frame-options: DENY
+permissions-policy: geolocation=(), camera=(), microphone=(), payment=()
+cross-origin-resource-policy: same-site
+content-security-policy: default-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+cache-control: no-store
+
+
+To compare both states directly, run this script twice against two
+separately started servers:
+
+    SECURITY_DEFENCES=off  uvicorn app.main:app --port 8000 --no-server-header   # then run this script
+    SECURITY_DEFENCES=on   uvicorn app.main:app --port 8000 --no-server-header   # (the default) then run this script again
+
+With it off: no X-Content-Type-Options / Referrer-Policy / X-Frame-Options /
+Content-Security-Policy / Permissions-Policy / Cache-Control headers.
+With it on (default): all present, as shown above.

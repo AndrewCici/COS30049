@@ -61,7 +61,7 @@ def test_deterministic_for_same_input():
 
 
 def test_short_text_warns():
-    r = client.post("/api/v1/score", json={"text": "One tiny sentence."})
+    r = client.post("/api/v1/score", json={"text": "One tiny sentence here now."})
     assert r.status_code == 200
     assert any("short" in w.lower() for w in r.json()["meta"]["warnings"])
 
@@ -71,13 +71,18 @@ def test_empty_text_rejected():
 
 
 def test_no_sentences_rejected():
-    r = client.post("/api/v1/score", json={"text": "!!! ??? ..."})
+    r = client.post("/api/v1/score", json={"text": "!!! ??? ... !!! ??? ..."})
     assert r.status_code == 422
-    assert "sentence" in r.json()["detail"].lower()
+    body = r.json()
+    assert "sentence" in body["error"]["message"].lower()
+    assert body["error"]["code"] == "NO_SENTENCES_FOUND"
+    assert "request_id" in body["error"]
 
 
 def test_too_long_rejected():
-    r = client.post("/api/v1/score", json={"text": "word " * 20000})
+    # Long enough to fail MAX_TEXT_CHARS, short enough to stay under the
+    # body-size limit (see test_dos_defences.py for that boundary).
+    r = client.post("/api/v1/score", json={"text": "word " * 3000})
     assert r.status_code == 422
 
 

@@ -21,17 +21,29 @@ Detection of AI-generated text is inherently uncertain: no published detector is
 │  React + MUI (Vite, TS)  │  ──── Axios POST /score ───▶ │  FastAPI backend              │
 │  - Paste box, Analyze    │                              │  - sentence segmentation      │
 │  - Highlighted sentences │ ◀──── scores + CI ────────── │  - Detector interface         │
-│  - Legend + doc gauge    │                              │     ├─ HF transformer (1st)   │
-└──────────────────────────┘                              │     ├─ trained statistical    │
+│  - Legend + doc gauge    │                              │     ├─ trained statistical    │
+└──────────────────────────┘                              │     │  (default)             │
+                                                          │     ├─ HF transformer (opt-in)│
                                                           │     └─ mock (stage 1 / tests) │
                                                           └───────────────────────────────┘
 ```
+
+> **Updated after Stage 3 (see [README.md](README.md)):** the fallback chain
+> below describes the design as planned in Stage 1. In the shipped app the
+> order is reversed from what this section originally said — the locally
+> trained statistical model is the default, runtime-only, zero-download
+> method; the HuggingFace transformer is available opt-in behind
+> `AIDETECT_ENABLE_HF=1` for anyone who installs the extra dependencies and
+> accepts the download. This was a deliberate clean-machine-install decision
+> made in Stage 3/Part E, not an abandonment of the transformer — see
+> "Design decisions" in the README for the reasoning. `docs/EVALUATION.md`'s
+> comparison of the two models, trained in Stage 2, is unaffected.
 
 ### Why this shape
 
 - **The API contract is fixed before any model exists.** The frontend is built in Stage 1 against a `mock` detector that honours the exact same request/response schema. When the trained model lands in Stage 3, *nothing* in the frontend changes. This is the "swappable detection method" requirement made concrete: the contract lives in `backend/app/schemas.py`, and every detector implements one interface (`Detector.score_sentences`).
 - **Segmentation and aggregation live in the backend, not the model.** Sentence splitting, length-weighting and the confidence interval are deliberately *outside* the detector interface. Upgrading the model can never change how scores are aggregated or how sentences are defined, so results stay comparable across model versions.
-- **Fallback chain, not fallback flag.** The backend resolves a detector at request time: HuggingFace classifier → locally trained statistical model → error. If the transformer can't be loaded (no weights downloaded, offline machine, out of memory), the statistical model answers instead, and the response's `meta.method` field tells the user which method actually ran (Nielsen #1: never pretend the primary model answered when it didn't).
+- **Fallback chain, not fallback flag.** The backend resolves a detector at request time: locally trained statistical model → HuggingFace transformer (only if explicitly enabled) → error. If the transformer is enabled but can't be loaded (no weights downloaded, offline machine, out of memory), the statistical model answers instead, and the response's `meta.method` field tells the user which method actually ran (Nielsen #1: never pretend a different model answered than the one that did).
 
 ### API contract (frozen from Stage 1)
 
@@ -49,7 +61,7 @@ Detection of AI-generated text is inherently uncertain: no published detector is
     "band": "mixed",
     "word_count": 214, "sentence_count": 12
   },
-  "meta": {"method": "hf-transformer", "model_name": "…", "version": "…", "fallback_used": false}
+  "meta": {"method": "statistical", "model_name": "…", "version": "…", "fallback_used": false}
 }
 ```
 
@@ -66,7 +78,7 @@ Detection of AI-generated text is inherently uncertain: no published detector is
 
 | Principle | Where it shows up |
 |---|---|
-| Nielsen 1 — Visibility of status | Loading indicator during scoring; method chip ("Transformer" / "Statistical fallback"); live word/char count |
+| Nielsen 1 — Visibility of status | Loading indicator during scoring; method chip ("Statistical" / "Transformer", whichever actually answered); live word/char count |
 | Nielsen 2 — Match with real world | "Likely human-written / Unclear / Likely AI-generated" wording, not raw logits |
 | Nielsen 3 — User control & freedom | Clear button, re-analyse after edit, results dismissible; no irreversible actions |
 | Nielsen 4 — Consistency | MUI components throughout; one fixed legend; same band wording everywhere |
@@ -85,7 +97,7 @@ Detection of AI-generated text is inherently uncertain: no published detector is
 Frontend built against the frozen contract; backend serves a deterministic `mock` detector (hash-based pseudo-scores) so the UI is fully exercisable. Deliverables: this plan, running prototype, design-decision log.
 
 **Stage 2 — Trained model + documented evaluation.**
-Train a logistic-regression classifier over TF-IDF n-grams + stylometric features on the HC3 corpus (human vs ChatGPT answers). Evaluate on a held-out split: accuracy, precision, recall, F1, plus calibration check (scores must be usable as probabilities, since the UI presents them as such). Deliverable: `docs/EVALUATION.md` with dataset description and limitations. The pretrained HuggingFace transformer (`Hello-SimpleAI/chatgpt-detector-roberta`) is evaluated on the same split for comparison and serves as the primary method.
+Train a logistic-regression classifier over TF-IDF n-grams + stylometric features on the HC3 corpus (human vs ChatGPT answers). Evaluate on a held-out split: accuracy, precision, recall, F1, plus calibration check (scores must be usable as probabilities, since the UI presents them as such). Deliverable: `docs/EVALUATION.md` with dataset description and limitations. The pretrained HuggingFace transformer (`Hello-SimpleAI/chatgpt-detector-roberta`) is evaluated on the same split for comparison; it scores higher (see `docs/EVALUATION.md`), but the trained statistical model became the shipped default in Stage 3 for the clean-machine-install reasons noted above.
 
 **Stage 3 — Integration + tests.**
 Wire both detectors behind the interface with the fallback chain; automated tests: API contract, sentence segmentation, weighted mean + CI properties, fallback behaviour, band consistency. End-to-end check in a browser.
