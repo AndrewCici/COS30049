@@ -22,10 +22,15 @@ const SECURITY_HEADERS = {
   'Referrer-Policy': 'no-referrer',
   'X-Frame-Options': 'DENY',
   'Permissions-Policy': 'geolocation=(), camera=(), microphone=(), payment=()',
-  // 'same-site' (not 'same-origin'): legitimate same-site, cross-port
-  // loads (this app itself, served from a different port in dev vs.
-  // preview) must not be blocked from embedding their own resources.
-  'Cross-Origin-Resource-Policy': 'same-site',
+  // 'same-origin': the strictest value. Every resource this server serves
+  // (the HTML document, its JS/CSS bundle, the favicon) is always loaded
+  // by a <script>/<link> tag on a page from this exact same origin --
+  // nothing cross-origin, same-site or otherwise, ever has a legitimate
+  // reason to load them, so there is no cross-port case to protect here
+  // (unlike the API, loaded cross-origin by this page's own fetch calls,
+  // which CORS governs instead of CORP -- see backend/app/security/headers.py
+  // for why the Fetch spec's CORP check does not apply to those calls).
+  'Cross-Origin-Resource-Policy': 'same-origin',
   // Isolates this page's browsing context from any cross-origin window
   // that opened or was opened from it. No feature here relies on sharing
   // that context (no OAuth popup, no cross-origin postMessage target), so

@@ -1,0 +1,71 @@
+=== Evidence: CORP: same-origin does not block the front end's real API calls ===
+Backend: FRONTEND_ORIGIN=http://localhost:4173, uvicorn --no-server-header
+Frontend: npm run build && npm run preview (port 4173)
+
+-- GET /api/v1/health (simulating the front end's own cross-origin CORS fetch, Origin: http://localhost:4173) --
+HTTP/1.1 200 OK
+date: Fri, 06 Nov 2026 07:30:27 GMT
+content-length: 81
+content-type: application/json
+access-control-allow-origin: http://localhost:4173
+vary: Origin
+x-request-id: fc1fc4ba-da72-4634-aaa3-c81fa17a5b8a
+x-content-type-options: nosniff
+referrer-policy: no-referrer
+x-frame-options: DENY
+permissions-policy: geolocation=(), camera=(), microphone=(), payment=()
+cross-origin-resource-policy: same-origin
+content-security-policy: default-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+
+
+-- GET /api/v1/model-info --
+HTTP/1.1 200 OK
+date: Fri, 06 Nov 2026 07:30:27 GMT
+content-length: 769
+content-type: application/json
+access-control-allow-origin: http://localhost:4173
+vary: Origin
+x-request-id: 1eee0e22-0ec4-4b7f-8d80-b310be420000
+x-content-type-options: nosniff
+referrer-policy: no-referrer
+x-frame-options: DENY
+permissions-policy: geolocation=(), camera=(), microphone=(), payment=()
+cross-origin-resource-policy: same-origin
+content-security-policy: default-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+
+
+-- POST /api/v1/score --
+HTTP/1.1 200 OK
+date: Fri, 06 Nov 2026 07:30:27 GMT
+content-length: 719
+content-type: application/json
+access-control-allow-origin: http://localhost:4173
+vary: Origin
+x-request-id: 2a6dd48e-0f69-4ba6-b7c2-68c4462d668e
+x-content-type-options: nosniff
+referrer-policy: no-referrer
+x-frame-options: DENY
+permissions-policy: geolocation=(), camera=(), microphone=(), payment=()
+cross-origin-resource-policy: same-origin
+content-security-policy: default-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+cache-control: no-store
+
+
+-- The front end's own served page also carries CORP: same-origin --
+HTTP/1.1 200 OK
+Vary: Origin
+Content-Type: text/html
+Cache-Control: no-cache
+Etag: W/"18b-Jft4EXvj2MV+T0LVd+0K1DecSJc"
+X-Content-Type-Options: nosniff
+Referrer-Policy: no-referrer
+X-Frame-Options: DENY
+Permissions-Policy: geolocation=(), camera=(), microphone=(), payment=()
+Cross-Origin-Resource-Policy: same-origin
+Cross-Origin-Opener-Policy: same-origin
+Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' http://localhost:8000; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+Date: Fri, 06 Nov 2026 07:30:28 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Content-Length: 395
+

@@ -48,11 +48,18 @@ BASE_HEADERS = {
     "Referrer-Policy": "no-referrer",
     "X-Frame-Options": "DENY",
     "Permissions-Policy": "geolocation=(), camera=(), microphone=(), payment=()",
-    # 'same-site' (not the stricter 'same-origin'): the front end calls this
-    # API from a different port on the same host (e.g. localhost:5173 ->
-    # localhost:8000), which is same-site but not same-origin, and that
-    # cross-port call must keep working.
-    "Cross-Origin-Resource-Policy": "same-site",
+    # 'same-origin': the strictest value. Per the Fetch spec, the
+    # cross-origin-resource-policy check only runs for a request whose
+    # mode is "no-cors" (the case CORP exists for: a plain <img>/<script>/
+    # <link> cross-origin load with no CORS handshake at all); a CORS-mode
+    # request -- which is what the front end's axios calls are, carrying
+    # an Origin header and expecting Access-Control-Allow-Origin back --
+    # is governed by CORS instead, and never reaches the CORP check. CORS
+    # here already allows exactly one origin (config.FRONTEND_ORIGIN), so
+    # 'same-origin' adds a real second layer rather than conflicting with
+    # it; confirmed by running the real app (both dev and `vite preview`)
+    # against this header, see backend/tests/test_live_cors_and_corp.py.
+    "Cross-Origin-Resource-Policy": "same-origin",
 }
 
 

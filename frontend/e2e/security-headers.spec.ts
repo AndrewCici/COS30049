@@ -8,7 +8,7 @@ test('the served page carries the security headers configured in vite.config.ts'
   expect(headers['x-content-type-options']).toBe('nosniff');
   expect(headers['referrer-policy']).toBe('no-referrer');
   expect(headers['x-frame-options']).toBe('DENY');
-  expect(headers['cross-origin-resource-policy']).toBe('same-site');
+  expect(headers['cross-origin-resource-policy']).toBe('same-origin');
   expect(headers['cross-origin-opener-policy']).toBe('same-origin');
 
   const csp = headers['content-security-policy'] ?? '';

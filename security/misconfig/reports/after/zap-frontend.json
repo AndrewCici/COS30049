@@ -1,8 +1,8 @@
 {
 	"@programName": "ZAP",
 	"@version": "2.17.0",
-	"@generated": "Fri, 6 Nov 2026 06:55:59",
-	"created": "2026-11-06T06:55:59.422848593Z",
+	"@generated": "Fri, 6 Nov 2026 07:18:34",
+	"created": "2026-11-06T07:18:34.684870219Z",
 	"insights":[
 		{
 			"level": "Low",
@@ -70,46 +70,6 @@
 			"alerts": [ 
 				{
 					"pluginid": "10055",
-					"alertRef": "10055-13",
-					"alert": "CSP: Failure to Define Directive with No Fallback",
-					"name": "CSP: Failure to Define Directive with No Fallback",
-					"riskcode": "2",
-					"confidence": "3",
-					"riskdesc": "Medium (High)",
-					"desc": "<p>The Content Security Policy fails to define one of the directives that has no fallback. Missing/excluding them is the same as allowing anything.</p>",
-					"instances":[ 
-						{
-							"id": "1",
-							"uri": "http://host.docker.internal:4173",
-							"nodeName": "http:\/\/host.docker.internal:4173",
-							"method": "GET",
-							"param": "Content-Security-Policy",
-							"attack": "",
-							"evidence": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' http://localhost:8000; frame-ancestors 'none'",
-							"otherinfo": "The directive(s): form-action is/are among the directives that do not fallback to default-src."
-						},
-						{
-							"id": "4",
-							"uri": "http://host.docker.internal:4173/robots.txt",
-							"nodeName": "http:\/\/host.docker.internal:4173\/robots.txt",
-							"method": "GET",
-							"param": "Content-Security-Policy",
-							"attack": "",
-							"evidence": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' http://localhost:8000; frame-ancestors 'none'",
-							"otherinfo": "The directive(s): form-action is/are among the directives that do not fallback to default-src."
-						}
-					],
-					"count": "2",
-					"systemic": false,
-					"solution": "<p>Ensure that your web server, application server, load balancer, etc. is properly configured to set the Content-Security-Policy header.</p>",
-					"otherinfo": "<p>The directive(s): form-action is/are among the directives that do not fallback to default-src.</p>",
-					"reference": "<p>https://www.w3.org/TR/CSP/</p><p>https://caniuse.com/#search=content+security+policy</p><p>https://content-security-policy.com/</p><p>https://github.com/HtmlUnit/htmlunit-csp</p><p>https://web.dev/articles/csp#resource-options</p>",
-					"cweid": "693",
-					"wascid": "15",
-					"sourceid": "6"
-				},
-				{
-					"pluginid": "10055",
 					"alertRef": "10055-6",
 					"alert": "CSP: style-src unsafe-inline",
 					"name": "CSP: style-src unsafe-inline",
@@ -119,37 +79,17 @@
 					"desc": "<p>Content Security Policy (CSP) is an added layer of security that helps to detect and mitigate certain types of attacks. Including (but not limited to) Cross Site Scripting (XSS), and data injection attacks. These attacks are used for everything from data theft to site defacement or distribution of malware. CSP provides a set of standard HTTP headers that allow website owners to declare approved sources of content that browsers should be allowed to load on that page \u2014 covered types are JavaScript, CSS, HTML frames, fonts, images and embeddable objects such as Java applets, ActiveX, audio and video files.</p>",
 					"instances":[ 
 						{
-							"id": "6",
+							"id": "1",
 							"uri": "http://host.docker.internal:4173",
 							"nodeName": "http:\/\/host.docker.internal:4173",
 							"method": "GET",
 							"param": "Content-Security-Policy",
 							"attack": "",
-							"evidence": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' http://localhost:8000; frame-ancestors 'none'",
-							"otherinfo": "style-src includes unsafe-inline."
-						},
-						{
-							"id": "7",
-							"uri": "http://host.docker.internal:4173/robots.txt",
-							"nodeName": "http:\/\/host.docker.internal:4173\/robots.txt",
-							"method": "GET",
-							"param": "Content-Security-Policy",
-							"attack": "",
-							"evidence": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' http://localhost:8000; frame-ancestors 'none'",
-							"otherinfo": "style-src includes unsafe-inline."
-						},
-						{
-							"id": "5",
-							"uri": "http://host.docker.internal:4173/sitemap.xml",
-							"nodeName": "http:\/\/host.docker.internal:4173\/sitemap.xml",
-							"method": "GET",
-							"param": "Content-Security-Policy",
-							"attack": "",
-							"evidence": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' http://localhost:8000; frame-ancestors 'none'",
+							"evidence": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' http://localhost:8000; base-uri 'self'; form-action 'self'; frame-ancestors 'none'",
 							"otherinfo": "style-src includes unsafe-inline."
 						}
 					],
-					"count": "3",
+					"count": "1",
 					"systemic": false,
 					"solution": "<p>Ensure that your web server, application server, load balancer, etc. is properly configured to set the Content-Security-Policy header.</p>",
 					"otherinfo": "<p>style-src includes unsafe-inline.</p>",
@@ -169,7 +109,7 @@
 					"desc": "<p>Cross-Origin-Embedder-Policy header is a response header that prevents a document from loading any cross-origin resources that don't explicitly grant the document permission (using CORP or CORS).</p>",
 					"instances":[ 
 						{
-							"id": "22",
+							"id": "15",
 							"uri": "http://host.docker.internal:4173",
 							"nodeName": "http:\/\/host.docker.internal:4173",
 							"method": "GET",
@@ -179,7 +119,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "15",
+							"id": "18",
 							"uri": "http://host.docker.internal:4173/robots.txt",
 							"nodeName": "http:\/\/host.docker.internal:4173\/robots.txt",
 							"method": "GET",
@@ -189,7 +129,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "21",
+							"id": "13",
 							"uri": "http://host.docker.internal:4173/sitemap.xml",
 							"nodeName": "http:\/\/host.docker.internal:4173\/sitemap.xml",
 							"method": "GET",
@@ -210,56 +150,6 @@
 				},
 				{
 					"pluginid": "90004",
-					"alertRef": "90004-3",
-					"alert": "Cross-Origin-Opener-Policy Header Missing or Invalid",
-					"name": "Cross-Origin-Opener-Policy Header Missing or Invalid",
-					"riskcode": "1",
-					"confidence": "2",
-					"riskdesc": "Low (Medium)",
-					"desc": "<p>Cross-Origin-Opener-Policy header is a response header that allows a site to control if others included documents share the same browsing context. Sharing the same browsing context with untrusted documents might lead to data leak.</p>",
-					"instances":[ 
-						{
-							"id": "23",
-							"uri": "http://host.docker.internal:4173",
-							"nodeName": "http:\/\/host.docker.internal:4173",
-							"method": "GET",
-							"param": "Cross-Origin-Opener-Policy",
-							"attack": "",
-							"evidence": "",
-							"otherinfo": ""
-						},
-						{
-							"id": "16",
-							"uri": "http://host.docker.internal:4173/robots.txt",
-							"nodeName": "http:\/\/host.docker.internal:4173\/robots.txt",
-							"method": "GET",
-							"param": "Cross-Origin-Opener-Policy",
-							"attack": "",
-							"evidence": "",
-							"otherinfo": ""
-						},
-						{
-							"id": "27",
-							"uri": "http://host.docker.internal:4173/sitemap.xml",
-							"nodeName": "http:\/\/host.docker.internal:4173\/sitemap.xml",
-							"method": "GET",
-							"param": "Cross-Origin-Opener-Policy",
-							"attack": "",
-							"evidence": "",
-							"otherinfo": ""
-						}
-					],
-					"count": "3",
-					"systemic": false,
-					"solution": "<p>Ensure that the application/web server sets the Cross-Origin-Opener-Policy header appropriately, and that it sets the Cross-Origin-Opener-Policy header to 'same-origin' for documents.</p><p>'same-origin-allow-popups' is considered as less secured and should be avoided.</p><p>If possible, ensure that the end user uses a standards-compliant and modern web browser that supports the Cross-Origin-Opener-Policy header (https://caniuse.com/mdn-http_headers_cross-origin-opener-policy).</p>",
-					"otherinfo": "",
-					"reference": "<p>https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cross-Origin-Opener-Policy</p>",
-					"cweid": "693",
-					"wascid": "14",
-					"sourceid": "6"
-				},
-				{
-					"pluginid": "90004",
 					"alertRef": "90004-1",
 					"alert": "Cross-Origin-Resource-Policy Header Missing or Invalid",
 					"name": "Cross-Origin-Resource-Policy Header Missing or Invalid",
@@ -269,37 +159,57 @@
 					"desc": "<p>Cross-Origin-Resource-Policy header is an opt-in header designed to counter side-channels attacks like Spectre. Resource should be specifically set as shareable amongst different origins.</p>",
 					"instances":[ 
 						{
-							"id": "19",
+							"id": "14",
 							"uri": "http://host.docker.internal:4173",
 							"nodeName": "http:\/\/host.docker.internal:4173",
 							"method": "GET",
 							"param": "Cross-Origin-Resource-Policy",
 							"attack": "",
-							"evidence": "",
+							"evidence": "same-site",
 							"otherinfo": ""
 						},
 						{
-							"id": "14",
+							"id": "29",
+							"uri": "http://host.docker.internal:4173/assets/index-TqDwI39c.js",
+							"nodeName": "http:\/\/host.docker.internal:4173\/assets\/index-TqDwI39c.js",
+							"method": "GET",
+							"param": "Cross-Origin-Resource-Policy",
+							"attack": "",
+							"evidence": "same-site",
+							"otherinfo": ""
+						},
+						{
+							"id": "9",
+							"uri": "http://host.docker.internal:4173/favicon.svg",
+							"nodeName": "http:\/\/host.docker.internal:4173\/favicon.svg",
+							"method": "GET",
+							"param": "Cross-Origin-Resource-Policy",
+							"attack": "",
+							"evidence": "same-site",
+							"otherinfo": ""
+						},
+						{
+							"id": "17",
 							"uri": "http://host.docker.internal:4173/robots.txt",
 							"nodeName": "http:\/\/host.docker.internal:4173\/robots.txt",
 							"method": "GET",
 							"param": "Cross-Origin-Resource-Policy",
 							"attack": "",
-							"evidence": "",
+							"evidence": "same-site",
 							"otherinfo": ""
 						},
 						{
-							"id": "20",
+							"id": "12",
 							"uri": "http://host.docker.internal:4173/sitemap.xml",
 							"nodeName": "http:\/\/host.docker.internal:4173\/sitemap.xml",
 							"method": "GET",
 							"param": "Cross-Origin-Resource-Policy",
 							"attack": "",
-							"evidence": "",
+							"evidence": "same-site",
 							"otherinfo": ""
 						}
 					],
-					"count": "3",
+					"count": "5",
 					"systemic": false,
 					"solution": "<p>Ensure that the application/web server sets the Cross-Origin-Resource-Policy header appropriately, and that it sets the Cross-Origin-Resource-Policy header to 'same-origin' for all web pages.</p><p>'same-site' is considered as less secured and should be avoided.</p><p>If resources must be shared, set the header to 'cross-origin'.</p><p>If possible, ensure that the end user uses a standards-compliant and modern web browser that supports the Cross-Origin-Resource-Policy header (https://caniuse.com/mdn-http_headers_cross-origin-resource-policy).</p>",
 					"otherinfo": "",
@@ -319,7 +229,7 @@
 					"desc": "<p>A timestamp was disclosed by the application/web server. - Unix</p>",
 					"instances":[ 
 						{
-							"id": "30",
+							"id": "23",
 							"uri": "http://host.docker.internal:4173/assets/index-TqDwI39c.js",
 							"nodeName": "http:\/\/host.docker.internal:4173\/assets\/index-TqDwI39c.js",
 							"method": "GET",
@@ -349,7 +259,7 @@
 					"desc": "<p>The response appears to contain suspicious comments which may help an attacker.</p>",
 					"instances":[ 
 						{
-							"id": "29",
+							"id": "22",
 							"uri": "http://host.docker.internal:4173/assets/index-TqDwI39c.js",
 							"nodeName": "http:\/\/host.docker.internal:4173\/assets\/index-TqDwI39c.js",
 							"method": "GET",
@@ -379,7 +289,7 @@
 					"desc": "<p>The application appears to be a modern web application. If you need to explore it automatically then the Client Spider may well be more effective than the standard one.</p>",
 					"instances":[ 
 						{
-							"id": "9",
+							"id": "4",
 							"uri": "http://host.docker.internal:4173",
 							"nodeName": "http:\/\/host.docker.internal:4173",
 							"method": "GET",
@@ -389,7 +299,7 @@
 							"otherinfo": "No links have been found while there are scripts, which is an indication that this is a modern web application."
 						},
 						{
-							"id": "8",
+							"id": "5",
 							"uri": "http://host.docker.internal:4173/robots.txt",
 							"nodeName": "http:\/\/host.docker.internal:4173\/robots.txt",
 							"method": "GET",
@@ -399,7 +309,7 @@
 							"otherinfo": "No links have been found while there are scripts, which is an indication that this is a modern web application."
 						},
 						{
-							"id": "11",
+							"id": "7",
 							"uri": "http://host.docker.internal:4173/sitemap.xml",
 							"nodeName": "http:\/\/host.docker.internal:4173\/sitemap.xml",
 							"method": "GET",
@@ -429,7 +339,7 @@
 					"desc": "<p>The response contents are storable by caching components such as proxy servers, but will not be retrieved directly from the cache, without validating the request upstream, in response to similar requests from other users.</p>",
 					"instances":[ 
 						{
-							"id": "12",
+							"id": "10",
 							"uri": "http://host.docker.internal:4173",
 							"nodeName": "http:\/\/host.docker.internal:4173",
 							"method": "GET",
@@ -439,7 +349,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "35",
+							"id": "28",
 							"uri": "http://host.docker.internal:4173/assets/index-TqDwI39c.js",
 							"nodeName": "http:\/\/host.docker.internal:4173\/assets\/index-TqDwI39c.js",
 							"method": "GET",
@@ -449,7 +359,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "28",
+							"id": "8",
 							"uri": "http://host.docker.internal:4173/favicon.svg",
 							"nodeName": "http:\/\/host.docker.internal:4173\/favicon.svg",
 							"method": "GET",
@@ -459,7 +369,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "13",
+							"id": "16",
 							"uri": "http://host.docker.internal:4173/robots.txt",
 							"nodeName": "http:\/\/host.docker.internal:4173\/robots.txt",
 							"method": "GET",
@@ -469,7 +379,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "18",
+							"id": "11",
 							"uri": "http://host.docker.internal:4173/sitemap.xml",
 							"nodeName": "http:\/\/host.docker.internal:4173\/sitemap.xml",
 							"method": "GET",

@@ -18,7 +18,7 @@ _REQUIRED = {
     "x-content-type-options": "nosniff",
     "referrer-policy": "no-referrer",
     "x-frame-options": "DENY",
-    "cross-origin-resource-policy": "same-site",
+    "cross-origin-resource-policy": "same-origin",
 }
 
 
