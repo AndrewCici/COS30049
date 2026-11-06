@@ -13,7 +13,9 @@ set -euo pipefail
 BASE_URL="${BASE_URL:-http://localhost:8000}"
 BIG_BODY=$(python3 -c "import json; print(json.dumps({'text': 'word '*20000}))")
 
-section() { printf '\n\033[1m%s\033[0m\n' "$1"; }
+# No ANSI styling: output is piped straight into committed .txt evidence
+# files as well as read on a terminal, and colour codes would corrupt both.
+section() { printf '\n%s\n' "$1"; }
 
 show() {
   local label="$1"; shift

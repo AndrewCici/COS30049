@@ -24,13 +24,22 @@ from .. import config
 # security/misconfig/FINDINGS.md for the finding this resolves.
 DOCS_PATHS = frozenset({"/docs", "/openapi.json", "/docs/oauth2-redirect"})
 
-API_CSP = "default-src 'none'; frame-ancestors 'none'"
+# base-uri and form-action have no fallback to default-src (unlike most
+# directives), so an otherwise-strict policy that omits them still leaves
+# <base> injection and form-hijacking open; ZAP's "Failure to Define
+# Directive with No Fallback" flags exactly this gap. Neither API response
+# contains a <base> tag or an HTML <form>, so 'self' is simply the
+# tightest value that is still correct.
+_NO_FALLBACK_DIRECTIVES = "base-uri 'self'; form-action 'self'"
+
+API_CSP = f"default-src 'none'; {_NO_FALLBACK_DIRECTIVES}; frame-ancestors 'none'"
 DOCS_CSP = (
     "default-src 'self'; "
     "script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; "
     "style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; "
     "img-src 'self' data: https://fastapi.tiangolo.com; "
     "connect-src 'self'; "
+    f"{_NO_FALLBACK_DIRECTIVES}; "
     "frame-ancestors 'none'"
 )
 
@@ -39,6 +48,11 @@ BASE_HEADERS = {
     "Referrer-Policy": "no-referrer",
     "X-Frame-Options": "DENY",
     "Permissions-Policy": "geolocation=(), camera=(), microphone=(), payment=()",
+    # 'same-site' (not the stricter 'same-origin'): the front end calls this
+    # API from a different port on the same host (e.g. localhost:5173 ->
+    # localhost:8000), which is same-site but not same-origin, and that
+    # cross-port call must keep working.
+    "Cross-Origin-Resource-Policy": "same-site",
 }
 
 

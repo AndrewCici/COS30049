@@ -1,30 +1,30 @@
 
-[1mHeaders are controlled by the SECURITY_DEFENCES env var on the running server -- this script only sends requests and prints what comes back.[0m
+Headers are controlled by the SECURITY_DEFENCES env var on the running server -- this script only sends requests and prints what comes back.
 
-[1m=== Current server (whatever SECURITY_DEFENCES it was started with) ===[0m
+=== Current server (whatever SECURITY_DEFENCES it was started with) ===
 
 -- GET /api/v1/health (200) --
 HTTP/1.1 200 OK
-date: Fri, 06 Nov 2026 00:31:00 GMT
+date: Fri, 06 Nov 2026 07:09:23 GMT
 content-length: 81
 content-type: application/json
-x-request-id: 4c8f2b04-9221-4659-bc08-0bd5668c6896
+x-request-id: 005cf6d6-5b4d-4190-a276-8b5b47f06cd6
 
 
 -- POST /api/v1/score (422, text too short) --
 HTTP/1.1 422 Unprocessable Entity
-date: Fri, 06 Nov 2026 00:31:00 GMT
+date: Fri, 06 Nov 2026 07:09:23 GMT
 content-length: 154
 content-type: application/json
-x-request-id: ca170e32-c0ca-4d7c-9e72-174ddbb07eab
+x-request-id: eb9be5be-f47a-42ec-b0ff-660ffb72d8c2
 
 
 -- POST /api/v1/score (413, oversized body) --
 HTTP/1.1 422 Unprocessable Entity
-date: Fri, 06 Nov 2026 00:31:00 GMT
+date: Fri, 06 Nov 2026 07:09:23 GMT
 content-length: 155
 content-type: application/json
-x-request-id: b1236ff5-b1d1-4905-bc2e-8368b67832ee
+x-request-id: 91eabda0-6a8b-42bc-aa42-1fad9a894cba
 
 
 To compare both states directly, run this script twice against two

@@ -18,6 +18,7 @@ _REQUIRED = {
     "x-content-type-options": "nosniff",
     "referrer-policy": "no-referrer",
     "x-frame-options": "DENY",
+    "cross-origin-resource-policy": "same-site",
 }
 
 
@@ -26,7 +27,13 @@ def _assert_security_headers(headers, *, csp_contains: str) -> None:
     for name, value in _REQUIRED.items():
         assert lower.get(name) == value, f"{name} missing or wrong: {lower.get(name)!r}"
     assert "permissions-policy" in lower
-    assert csp_contains in lower.get("content-security-policy", "")
+    csp = lower.get("content-security-policy", "")
+    assert csp_contains in csp
+    # base-uri/form-action have no fallback to default-src, so ZAP's
+    # "Failure to Define Directive with No Fallback" check needs them
+    # present explicitly on every response, not inferred from default-src.
+    assert "base-uri 'self'" in csp
+    assert "form-action 'self'" in csp
 
 
 def test_headers_present_on_200():
@@ -105,5 +112,7 @@ def test_headers_disabled_by_security_defences_off(monkeypatch):
     monkeypatch.setenv("SECURITY_DEFENCES", "off")
     r = client.get("/api/v1/health")
     assert r.status_code == 200
-    assert "x-content-type-options" not in {k.lower() for k in r.headers}
-    assert "content-security-policy" not in {k.lower() for k in r.headers}
+    names = {k.lower() for k in r.headers}
+    assert "x-content-type-options" not in names
+    assert "content-security-policy" not in names
+    assert "cross-origin-resource-policy" not in names

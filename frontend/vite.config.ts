@@ -22,6 +22,16 @@ const SECURITY_HEADERS = {
   'Referrer-Policy': 'no-referrer',
   'X-Frame-Options': 'DENY',
   'Permissions-Policy': 'geolocation=(), camera=(), microphone=(), payment=()',
+  // 'same-site' (not 'same-origin'): legitimate same-site, cross-port
+  // loads (this app itself, served from a different port in dev vs.
+  // preview) must not be blocked from embedding their own resources.
+  'Cross-Origin-Resource-Policy': 'same-site',
+  // Isolates this page's browsing context from any cross-origin window
+  // that opened or was opened from it. No feature here relies on sharing
+  // that context (no OAuth popup, no cross-origin postMessage target), so
+  // this is free isolation with nothing to break. (Cross-Origin-Embedder-
+  // Policy is deliberately NOT set -- see security/misconfig/FINDINGS.md.)
+  'Cross-Origin-Opener-Policy': 'same-origin',
 }
 
 function csp(dev: boolean): string {
@@ -34,6 +44,11 @@ function csp(dev: boolean): string {
     "img-src 'self' data:",
     "font-src 'self'",
     `connect-src ${connectSrc}`,
+    // No fallback to default-src for these two (unlike most directives),
+    // so an otherwise-strict policy that omitted them would still leave
+    // <base> injection and form-hijacking open.
+    "base-uri 'self'",
+    "form-action 'self'",
     "frame-ancestors 'none'",
   ].join('; ')
 }
