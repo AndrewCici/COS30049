@@ -89,65 +89,59 @@ before the first ZAP scan in `reports/before/`:
 
 Every row is built directly from `reports/{before,after}/zap-{api,frontend}.json`
 (`pluginid`, `name`, `riskdesc`, instance counts). Three rounds of header
-changes happened across this investigation:
+changes happened across this investigation, landing on the final,
+re-scanned state below:
 
 - **Round 1** (commit `88459a4`): the base security headers (`X-Content-
   Type-Options`, `Referrer-Policy`, `X-Frame-Options`, `Content-Security-
   Policy`, `Permissions-Policy`, `Cache-Control` on `/score`).
 - **Round 2** (commit `5d0c37a`): `base-uri`/`form-action` on both CSPs,
   `Cross-Origin-Opener-Policy: same-origin` on the front end, and
-  `Cross-Origin-Resource-Policy: same-site` on both. **`reports/before/`
-  predates round 1; `reports/after/` is round 2** — the committed before →
-  after comparison below is genuinely round 1-vs-2 ZAP evidence, not
-  estimated.
-- **Round 3** (this change, not yet re-scanned): `Cross-Origin-Resource-
-  Policy` changed from `same-site` to `same-origin` on *both* the API and
-  the front end. Round 2's `same-site` choice was based on an incorrect
-  read of the CORP spec (see the justification below); round 2's `after/`
-  scan still flagged `90004` as a result, on both sites, and the row below
-  is marked accordingly. **Not yet confirmed by a fresh ZAP run** — this
-  file will be updated once that re-scan lands.
+  `Cross-Origin-Resource-Policy: same-site` on both.
+- **Round 3** (commit `748e25b`): `Cross-Origin-Resource-Policy` corrected
+  from `same-site` to `same-origin` on both the API and the front end --
+  round 2's `same-site` choice was based on an incorrect read of the CORP
+  spec (see the dedicated section below).
+
+`reports/before/` predates round 1. `reports/after/` is the final re-scan
+against round 3 (API: 2026-11-06 07:39 UTC, WARN-NEW 0, PASS 120; front
+end: same run, confirmed clean of `90004`), so the before → after columns
+below are genuine round-0-vs-round-3 ZAP evidence.
 
 ### API (`zap-api-scan.py` against `/openapi.json`)
 
-| Plugin | Alert | Risk | URLs (sample) | Before (round 0) | After (round 2, committed) | Round 3 (pending re-scan) |
+| Plugin | Alert | Risk | URLs (sample) | Before | After | Action |
 |---|---|---|---|---|---|---|
-| 90004 | Cross-Origin-Resource-Policy Header Missing or Invalid | Low (Medium) | `/api/v1/health`, `/api/v1/model-info`, `/openapi.json` | 3 instances | 3 instances (`same-site` set, but ZAP's rule only accepts `same-origin`) | **Fixed** — `same-origin`; see justification below |
-| 10021 | X-Content-Type-Options Header Missing | Low (Medium) | `/api/v1/health`, `/api/v1/model-info`, `/openapi.json` | 3 instances | **0** | — |
+| 90004 | Cross-Origin-Resource-Policy Header Missing or Invalid | Low (Medium) | `/api/v1/health`, `/api/v1/model-info`, `/openapi.json` | 3 instances | **0** | **Fixed** — `Cross-Origin-Resource-Policy: same-origin`; see justification below |
+| 10021 | X-Content-Type-Options Header Missing | Low (Medium) | `/api/v1/health`, `/api/v1/model-info`, `/openapi.json` | 3 instances | **0** | **Fixed** |
 | 100000 | A Client Error response code was returned by the server | Informational (High) | `/`, `/{spider-guessed-path}` | 19 instances | 19 instances | **Accepted, no action** — these are the spider's own 404 probes against paths that do not exist; a 404 (not a 500 or a stack trace) is the correct, intended response and is exactly what `backend/tests/test_error_handling.py::test_404_uses_error_envelope` checks |
 | 10049 | Non-Storable Content | Informational (Medium) | `/api/v1/score` | 1 instance | 1 instance | **Accepted, no action** — this is `Cache-Control: no-store` on `/score` (finding 2 above) being correctly observed, not a gap |
-| 10049 | Storable and Cacheable Content | Informational (Medium) | `/api/v1/health`, `/api/v1/model-info`, `/openapi.json` | 3 instances | 3 instances | **Accepted, no action** — none of these three responses are sensitive or user-specific; being cacheable by an intermediary is harmless and, for `/openapi.json` in particular, desirable |
+| 10049 | Storable and Cacheable Content | Informational (Medium) | `/api/v1/health`, `/api/v1/model-info`, `/openapi.json` | 3 instances | 2 instances | **Accepted, no action** — none of these responses are sensitive or user-specific; being cacheable by an intermediary is harmless and, for `/openapi.json` in particular, desirable |
 
-**Alert rows at Low risk or above:** 2 (round 0) → 1 (round 2, committed) →
-**0 expected** once round 3 is re-scanned.
+**Alert rows at Low risk or above: 2 → 0.** `zap-api-scan.py`'s own
+summary for this final run: **WARN-NEW 0, PASS 120, 0 FAIL.**
 
 ### Front end (`zap-baseline.py` against the `vite preview` build)
 
-| Plugin | Alert | Risk | Before (round 0) | After (round 2, committed) | Round 3 (pending re-scan) |
+| Plugin | Alert | Risk | Before | After | Action |
 |---|---|---|---|---|---|
-| 10038 | Content Security Policy (CSP) Header Not Set | Medium (High) | 3 instances | **0** | — |
-| 10020 | Missing Anti-clickjacking Header | Medium (Medium) | 3 instances | **0** | — |
-| 10063 | Permissions Policy Header Not Set | Low (Medium) | 4 instances | **0** | — |
-| 10021 | X-Content-Type-Options Header Missing | Low (Medium) | 5 instances | **0** | — |
-| 90004 | Cross-Origin-Opener-Policy Header Missing or Invalid | Low (Medium) | 3 instances | **0** | — |
-| 90004 | Cross-Origin-Resource-Policy Header Missing or Invalid | Low (Medium) | 4 instances | 5 instances (`same-site` set, same issue as the API) | **Fixed** — `same-origin`; see justification below |
-| 10055 | CSP: Failure to Define Directive with No Fallback | Medium (High) | *(CSP did not exist at round 0)* | **0** | — |
-| 10055 | CSP: style-src unsafe-inline | Medium (High) | *(CSP did not exist at round 0)* | 1 instance | **Justified, accepted risk** — see below |
+| 10038 | Content Security Policy (CSP) Header Not Set | Medium (High) | 3 instances | **0** | **Fixed** |
+| 10020 | Missing Anti-clickjacking Header | Medium (Medium) | 3 instances | **0** | **Fixed** — `X-Frame-Options: DENY` |
+| 10063 | Permissions Policy Header Not Set | Low (Medium) | 4 instances | **0** | **Fixed** |
+| 10021 | X-Content-Type-Options Header Missing | Low (Medium) | 5 instances | **0** | **Fixed** |
+| 90004 | Cross-Origin-Opener-Policy Header Missing or Invalid | Low (Medium) | 3 instances | **0** | **Fixed** — `Cross-Origin-Opener-Policy: same-origin` |
+| 90004 | Cross-Origin-Resource-Policy Header Missing or Invalid | Low (Medium) | 4 instances | **0** | **Fixed** — `Cross-Origin-Resource-Policy: same-origin`; see justification below |
+| 10055 | CSP: Failure to Define Directive with No Fallback | Medium (High) | *(CSP did not exist yet)* | **0** | **Fixed** — `base-uri 'self'; form-action 'self'` |
+| 10055 | CSP: style-src unsafe-inline | Medium (High) | *(CSP did not exist yet)* | 1 instance | **Justified, accepted risk** — see below |
 | 90004 | Cross-Origin-Embedder-Policy Header Missing or Invalid | Low (Medium) | 3 instances | 3 instances | **Justified, accepted risk** — see below |
 | 10096 | Timestamp Disclosure - Unix | Low (Low) | 1 instance | 1 instance | **False positive, justified** — see below |
 | 10027 | Information Disclosure - Suspicious Comments | Informational (Medium) | 1 instance | 1 instance | **Accepted, false positive** — see below |
-| 10109 | Modern Web Application | Informational (Medium) | 3 instances | 3 instances | **Accepted, no action** — ZAP's own description says so: "This is an informational alert and so no changes are required" |
+| 10109 | Modern Web Application | Informational (Medium) | 3 instances | 2 instances | **Accepted, no action** — ZAP's own description says so: "This is an informational alert and so no changes are required" |
 | 10049 | Storable but Non-Cacheable Content | Informational (Medium) | 5 instances | 5 instances | **Accepted, no action** — `vite preview`'s own default `Cache-Control: no-cache` on its static files; not something this app's code sets or needs to change |
 
-**Alert rows at Low risk or above:** 8 (round 0) → 4 (round 2, committed:
-`style-src unsafe-inline`, COEP, CORP, Timestamp Disclosure) → **3
-expected** once round 3 is re-scanned (CORP drops out; `style-src`, COEP
-and Timestamp Disclosure are unaffected by this change and stay justified
-below). The committed `.html`/`.json` report templates do not themselves
-record `zap-baseline.py`'s PASS/WARN/FAIL threshold summary (that line is
-only printed to the console the scan ran in); **0 FAIL** for the round-2
-run is as reported directly, not independently re-derived from the
-committed files here.
+**Alert rows at Low risk or above: 8 → 3** (`style-src unsafe-inline`,
+COEP, Timestamp Disclosure — all justified below). **0 FAIL** in this
+final run.
 
 ### Why Cross-Origin-Resource-Policy is `same-origin`, not `same-site`
 
@@ -179,8 +173,11 @@ against the live (unmocked) backend in both serving modes --
 not a mocked route) against `npm run dev`, and `reports/corp_same_origin_live_verification.txt`
 (raw `curl -i` output, including the UI itself loaded and used in a real
 browser first) against the `npm run build` + `npm run preview` production
-build with `FRONTEND_ORIGIN` pointed at `http://localhost:4173` -- and
-every call succeeded in both modes.
+build with `FRONTEND_ORIGIN` pointed at `http://localhost:4173` -- every
+call succeeded in both modes. The final ZAP re-scan confirms the same
+thing from the opposite direction: `90004` is gone from both reports, and
+the API scan's own summary (`WARN-NEW 0, PASS 120`) shows nothing else
+regressed as a result of the change.
 
 ### Justifications for findings left open
 

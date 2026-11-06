@@ -1,8 +1,8 @@
 {
 	"@programName": "ZAP",
 	"@version": "2.17.0",
-	"@generated": "Fri, 6 Nov 2026 07:17:36",
-	"created": "2026-11-06T07:17:36.973432095Z",
+	"@generated": "Fri, 6 Nov 2026 07:39:38",
+	"created": "2026-11-06T07:39:38.590435294Z",
 	"insights":[
 		{
 			"level": "Info",
@@ -51,6 +51,14 @@
 			"key": "insight.endpoint.total",
 			"description": "Count of total endpoints",
 			"statistic": "21"
+		},
+		{
+			"level": "Info",
+			"reason": "Informational",
+			"site": "http://host.docker.internal:8000",
+			"key": "insight.response.slow",
+			"description": "Percentage of slow responses",
+			"statistic": "1"
 		}
 	],
 	"site":[ 
@@ -60,56 +68,6 @@
 			"@port": "8000",
 			"@ssl": "false",
 			"alerts": [ 
-				{
-					"pluginid": "90004",
-					"alertRef": "90004-1",
-					"alert": "Cross-Origin-Resource-Policy Header Missing or Invalid",
-					"name": "Cross-Origin-Resource-Policy Header Missing or Invalid",
-					"riskcode": "1",
-					"confidence": "2",
-					"riskdesc": "Low (Medium)",
-					"desc": "<p>Cross-Origin-Resource-Policy header is an opt-in header designed to counter side-channels attacks like Spectre. Resource should be specifically set as shareable amongst different origins.</p>",
-					"instances":[ 
-						{
-							"id": "12",
-							"uri": "http://host.docker.internal:8000/api/v1/health",
-							"nodeName": "http:\/\/host.docker.internal:8000\/api\/v1\/health",
-							"method": "GET",
-							"param": "Cross-Origin-Resource-Policy",
-							"attack": "",
-							"evidence": "same-site",
-							"otherinfo": ""
-						},
-						{
-							"id": "16",
-							"uri": "http://host.docker.internal:8000/api/v1/model-info",
-							"nodeName": "http:\/\/host.docker.internal:8000\/api\/v1\/model-info",
-							"method": "GET",
-							"param": "Cross-Origin-Resource-Policy",
-							"attack": "",
-							"evidence": "same-site",
-							"otherinfo": ""
-						},
-						{
-							"id": "1",
-							"uri": "http://host.docker.internal:8000/openapi.json",
-							"nodeName": "http:\/\/host.docker.internal:8000\/openapi.json",
-							"method": "GET",
-							"param": "Cross-Origin-Resource-Policy",
-							"attack": "",
-							"evidence": "same-site",
-							"otherinfo": ""
-						}
-					],
-					"count": "3",
-					"systemic": false,
-					"solution": "<p>Ensure that the application/web server sets the Cross-Origin-Resource-Policy header appropriately, and that it sets the Cross-Origin-Resource-Policy header to 'same-origin' for all web pages.</p><p>'same-site' is considered as less secured and should be avoided.</p><p>If resources must be shared, set the header to 'cross-origin'.</p><p>If possible, ensure that the end user uses a standards-compliant and modern web browser that supports the Cross-Origin-Resource-Policy header (https://caniuse.com/mdn-http_headers_cross-origin-resource-policy).</p>",
-					"otherinfo": "",
-					"reference": "<p>https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cross-Origin-Embedder-Policy</p>",
-					"cweid": "693",
-					"wascid": "14",
-					"sourceid": "3"
-				},
 				{
 					"pluginid": "100000",
 					"alertRef": "100000-1",
@@ -121,7 +79,7 @@
 					"desc": "<p>A response code of 404 was returned by the server.</p><p>This may indicate that the application is failing to handle unexpected input correctly.</p><p>Raised by the 'Alert on HTTP Response Code Error' script</p>",
 					"instances":[ 
 						{
-							"id": "6",
+							"id": "8",
 							"uri": "http://host.docker.internal:8000",
 							"nodeName": "http:\/\/host.docker.internal:8000",
 							"method": "GET",
@@ -131,7 +89,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "93",
+							"id": "90",
 							"uri": "http://host.docker.internal:8000/",
 							"nodeName": "http:\/\/host.docker.internal:8000\/",
 							"method": "GET",
@@ -141,9 +99,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "3",
-							"uri": "http://host.docker.internal:8000/4431738106952797498",
-							"nodeName": "http:\/\/host.docker.internal:8000\/4431738106952797498",
+							"id": "5",
+							"uri": "http://host.docker.internal:8000/4939018953625298886",
+							"nodeName": "http:\/\/host.docker.internal:8000\/4939018953625298886",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -151,7 +109,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "7",
+							"id": "9",
 							"uri": "http://host.docker.internal:8000/api",
 							"nodeName": "http:\/\/host.docker.internal:8000\/api",
 							"method": "GET",
@@ -161,7 +119,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "95",
+							"id": "91",
 							"uri": "http://host.docker.internal:8000/api/",
 							"nodeName": "http:\/\/host.docker.internal:8000\/api\/",
 							"method": "GET",
@@ -171,9 +129,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "4",
-							"uri": "http://host.docker.internal:8000/api/319598023018865024",
-							"nodeName": "http:\/\/host.docker.internal:8000\/api\/319598023018865024",
+							"id": "6",
+							"uri": "http://host.docker.internal:8000/api/4698038582675751917",
+							"nodeName": "http:\/\/host.docker.internal:8000\/api\/4698038582675751917",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -181,7 +139,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "8",
+							"id": "10",
 							"uri": "http://host.docker.internal:8000/api/v1",
 							"nodeName": "http:\/\/host.docker.internal:8000\/api\/v1",
 							"method": "GET",
@@ -191,7 +149,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "96",
+							"id": "93",
 							"uri": "http://host.docker.internal:8000/api/v1/",
 							"nodeName": "http:\/\/host.docker.internal:8000\/api\/v1\/",
 							"method": "GET",
@@ -201,9 +159,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "5",
-							"uri": "http://host.docker.internal:8000/api/v1/5757319616014675191",
-							"nodeName": "http:\/\/host.docker.internal:8000\/api\/v1\/5757319616014675191",
+							"id": "7",
+							"uri": "http://host.docker.internal:8000/api/v1/8373451202387694986",
+							"nodeName": "http:\/\/host.docker.internal:8000\/api\/v1\/8373451202387694986",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -211,7 +169,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "112",
+							"id": "108",
 							"uri": "http://host.docker.internal:8000/api/v1/actuator/health",
 							"nodeName": "http:\/\/host.docker.internal:8000\/api\/v1\/actuator\/health",
 							"method": "GET",
@@ -221,7 +179,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "2",
+							"id": "1",
 							"uri": "http://host.docker.internal:8000/api/v1/score",
 							"nodeName": "http:\/\/host.docker.internal:8000\/api\/v1\/score ()({text})",
 							"method": "POST",
@@ -231,7 +189,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "91",
+							"id": "89",
 							"uri": "http://host.docker.internal:8000/api/v1/score/",
 							"nodeName": "http:\/\/host.docker.internal:8000\/api\/v1\/score\/ ()({text})",
 							"method": "POST",
@@ -241,7 +199,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "64",
+							"id": "61",
 							"uri": "http://host.docker.internal:8000/computeMetadata/v1/",
 							"nodeName": "http:\/\/host.docker.internal:8000\/computeMetadata\/v1\/ ()({text})",
 							"method": "POST",
@@ -251,7 +209,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "60",
+							"id": "57",
 							"uri": "http://host.docker.internal:8000/latest/meta-data/",
 							"nodeName": "http:\/\/host.docker.internal:8000\/latest\/meta-data\/ ()({text})",
 							"method": "POST",
@@ -261,7 +219,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "81",
+							"id": "78",
 							"uri": "http://host.docker.internal:8000/metadata/instance",
 							"nodeName": "http:\/\/host.docker.internal:8000\/metadata\/instance ()({text})",
 							"method": "POST",
@@ -271,7 +229,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "82",
+							"id": "79",
 							"uri": "http://host.docker.internal:8000/metadata/v1",
 							"nodeName": "http:\/\/host.docker.internal:8000\/metadata\/v1 ()({text})",
 							"method": "POST",
@@ -281,7 +239,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "70",
+							"id": "67",
 							"uri": "http://host.docker.internal:8000/opc/v1/instance/",
 							"nodeName": "http:\/\/host.docker.internal:8000\/opc\/v1\/instance\/ ()({text})",
 							"method": "POST",
@@ -291,7 +249,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "73",
+							"id": "71",
 							"uri": "http://host.docker.internal:8000/opc/v2/instance/",
 							"nodeName": "http:\/\/host.docker.internal:8000\/opc\/v2\/instance\/ ()({text})",
 							"method": "POST",
@@ -301,7 +259,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "83",
+							"id": "80",
 							"uri": "http://host.docker.internal:8000/openstack/latest/meta_data.json",
 							"nodeName": "http:\/\/host.docker.internal:8000\/openstack\/latest\/meta_data.json ()({text})",
 							"method": "POST",
@@ -331,7 +289,7 @@
 					"desc": "<p>The response contents are not storable by caching components such as proxy servers. If the response does not contain sensitive, personal or user-specific information, it may benefit from being stored and cached, to improve performance.</p>",
 					"instances":[ 
 						{
-							"id": "14",
+							"id": "4",
 							"uri": "http://host.docker.internal:8000/api/v1/score",
 							"nodeName": "http:\/\/host.docker.internal:8000\/api\/v1\/score ()({text})",
 							"method": "POST",
@@ -361,7 +319,7 @@
 					"desc": "<p>The response contents are storable by caching components such as proxy servers, and may be retrieved directly from the cache, rather than from the origin server by the caching servers, in response to similar requests from other users. If the response data is sensitive, personal or user-specific, this may result in sensitive information being leaked. In some cases, this may even result in a user gaining complete control of the session of another user, depending on the configuration of the caching components in use in their environment. This is primarily an issue where \"shared\" caching servers such as \"proxy\" caches are configured on the local network. This configuration is typically found in corporate or educational environments, for instance.</p>",
 					"instances":[ 
 						{
-							"id": "11",
+							"id": "2",
 							"uri": "http://host.docker.internal:8000/api/v1/health",
 							"nodeName": "http:\/\/host.docker.internal:8000\/api\/v1\/health",
 							"method": "GET",
@@ -371,7 +329,7 @@
 							"otherinfo": "In the absence of an explicitly specified caching lifetime directive in the response, a liberal lifetime heuristic of 1 year was assumed. This is permitted by rfc7234."
 						},
 						{
-							"id": "15",
+							"id": "3",
 							"uri": "http://host.docker.internal:8000/api/v1/model-info",
 							"nodeName": "http:\/\/host.docker.internal:8000\/api\/v1\/model-info",
 							"method": "GET",
@@ -379,19 +337,9 @@
 							"attack": "",
 							"evidence": "",
 							"otherinfo": "In the absence of an explicitly specified caching lifetime directive in the response, a liberal lifetime heuristic of 1 year was assumed. This is permitted by rfc7234."
-						},
-						{
-							"id": "0",
-							"uri": "http://host.docker.internal:8000/openapi.json",
-							"nodeName": "http:\/\/host.docker.internal:8000\/openapi.json",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "",
-							"otherinfo": "In the absence of an explicitly specified caching lifetime directive in the response, a liberal lifetime heuristic of 1 year was assumed. This is permitted by rfc7234."
 						}
 					],
-					"count": "3",
+					"count": "2",
 					"systemic": false,
 					"solution": "<p>Validate that the response does not contain sensitive, personal or user-specific information. If it does, consider the use of the following HTTP response headers, to limit, or prevent the content being stored and retrieved from the cache by another user:</p><p>Cache-Control: no-cache, no-store, must-revalidate, private</p><p>Pragma: no-cache</p><p>Expires: 0</p><p>This configuration directs both HTTP 1.0 and HTTP 1.1 compliant caching servers to not store the response, and to not retrieve the response (without validation) from the cache, in response to a similar request.</p>",
 					"otherinfo": "<p>In the absence of an explicitly specified caching lifetime directive in the response, a liberal lifetime heuristic of 1 year was assumed. This is permitted by rfc7234.</p>",
