@@ -16,10 +16,11 @@ from .aggregate import bootstrap_ci, document_band, weighted_mean
 from .detectors import registry
 from .detectors.base import Detector
 from .model_integrity import ModelIntegrityError
+from .normalise import normalise_text, translate_span
 from .schemas import (BAND_THRESHOLDS, DocumentScore, ErrorResponse,
                       HealthResponse, InputLimits, Meta, ModelInfoResponse,
-                      ScoreRequest, ScoreResponse, SentenceScore, band_for,
-                      confidence_for, verdict_for)
+                      NormalisationInfo, ScoreRequest, ScoreResponse,
+                      SentenceScore, band_for, confidence_for, verdict_for)
 from .security.body_limit import BodySizeLimitMiddleware
 from .security.headers import SecurityHeadersMiddleware, headers_for_path
 from .security.limiter import InferenceUnavailableError, inference_limiter
@@ -368,7 +369,14 @@ async def _run_inference(detector: Detector, texts: list[str]) -> list[float]:
     responses=_ERROR_RESPONSES,
 )
 async def score(req: ScoreRequest) -> ScoreResponse:
-    sents = split_sentences(req.text)
+    # Scoring and sentence-splitting run on normalised text (defeats
+    # homoglyph/invisible-character/combining-mark evasion -- see
+    # security/evasion/REPORT.md); `norm` stays available to translate
+    # offsets back so the response highlights the user's own pasted text.
+    norm = normalise_text(req.text) if config.normalise_input_enabled() else None
+    working_text = norm.text if norm is not None else req.text
+
+    sents = split_sentences(working_text)
     if not sents:
         raise ApiError(
             422, "NO_SENTENCES_FOUND",
@@ -399,14 +407,18 @@ async def score(req: ScoreRequest) -> ScoreResponse:
         ) from exc
     raw_scores = [min(max(s, 0.0), 1.0) for s in raw_scores]
 
-    sentence_scores = [
-        SentenceScore(
-            text=s.text, start=s.start, end=s.end,
+    sentence_scores = []
+    for s, score_i in zip(sents, raw_scores):
+        if norm is not None:
+            disp_start, disp_end = translate_span(norm, s.start, s.end)
+            disp_text = req.text[disp_start:disp_end]
+        else:
+            disp_start, disp_end, disp_text = s.start, s.end, s.text
+        sentence_scores.append(SentenceScore(
+            text=disp_text, start=disp_start, end=disp_end,
             score=round(score_i, 4), band=band_for(score_i),
             word_count=s.word_count,
-        )
-        for s, score_i in zip(sents, raw_scores)
-    ]
+        ))
 
     weights = [float(s.word_count) for s in sents]
     doc_score = weighted_mean(raw_scores, weights)
@@ -441,5 +453,11 @@ async def score(req: ScoreRequest) -> ScoreResponse:
             method=detector.name, model_name=detector.model_name,
             version=detector.version, fallback_used=fallback_used,
             warnings=warnings,
+            normalisation=NormalisationInfo(
+                applied=norm is not None,
+                format_chars_removed=norm.cf_removed if norm else 0,
+                combining_marks_removed=norm.combining_marks_removed if norm else 0,
+                confusables_mapped=norm.confusables_mapped if norm else 0,
+            ),
         ),
     )

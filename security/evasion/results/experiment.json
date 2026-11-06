@@ -1,0 +1,331 @@
+{
+  "n_eligible": 6868,
+  "pool_size": 1000,
+  "seeds": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "n_per_seed": 200,
+  "verdict_threshold": 0.5,
+  "conditions": {
+    "homoglyph_10pct": {
+      "technique": "homoglyph",
+      "rate": 0.1,
+      "n": 1000,
+      "undefended": {
+        "k": 51,
+        "rate": 0.051,
+        "ci95": [
+          0.038,
+          0.064
+        ]
+      },
+      "defended": {
+        "k": 0,
+        "rate": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    "homoglyph_25pct": {
+      "technique": "homoglyph",
+      "rate": 0.25,
+      "n": 1000,
+      "undefended": {
+        "k": 147,
+        "rate": 0.147,
+        "ci95": [
+          0.125,
+          0.17
+        ]
+      },
+      "defended": {
+        "k": 0,
+        "rate": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    "homoglyph_50pct": {
+      "technique": "homoglyph",
+      "rate": 0.5,
+      "n": 1000,
+      "undefended": {
+        "k": 341,
+        "rate": 0.341,
+        "ci95": [
+          0.31,
+          0.372
+        ]
+      },
+      "defended": {
+        "k": 0,
+        "rate": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    "invisible_10pct": {
+      "technique": "invisible",
+      "rate": 0.1,
+      "n": 1000,
+      "undefended": {
+        "k": 110,
+        "rate": 0.11,
+        "ci95": [
+          0.091,
+          0.129
+        ]
+      },
+      "defended": {
+        "k": 0,
+        "rate": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    "invisible_25pct": {
+      "technique": "invisible",
+      "rate": 0.25,
+      "n": 1000,
+      "undefended": {
+        "k": 365,
+        "rate": 0.365,
+        "ci95": [
+          0.336,
+          0.396
+        ]
+      },
+      "defended": {
+        "k": 0,
+        "rate": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    "invisible_50pct": {
+      "technique": "invisible",
+      "rate": 0.5,
+      "n": 1000,
+      "undefended": {
+        "k": 678,
+        "rate": 0.678,
+        "ci95": [
+          0.647,
+          0.706
+        ]
+      },
+      "defended": {
+        "k": 0,
+        "rate": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    "fullwidth_10pct": {
+      "technique": "fullwidth",
+      "rate": 0.1,
+      "n": 1000,
+      "undefended": {
+        "k": 83,
+        "rate": 0.083,
+        "ci95": [
+          0.066,
+          0.1
+        ]
+      },
+      "defended": {
+        "k": 0,
+        "rate": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    "fullwidth_25pct": {
+      "technique": "fullwidth",
+      "rate": 0.25,
+      "n": 1000,
+      "undefended": {
+        "k": 256,
+        "rate": 0.256,
+        "ci95": [
+          0.231,
+          0.284
+        ]
+      },
+      "defended": {
+        "k": 0,
+        "rate": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    "fullwidth_50pct": {
+      "technique": "fullwidth",
+      "rate": 0.5,
+      "n": 1000,
+      "undefended": {
+        "k": 489,
+        "rate": 0.489,
+        "ci95": [
+          0.458,
+          0.519
+        ]
+      },
+      "defended": {
+        "k": 0,
+        "rate": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    "combining_10pct": {
+      "technique": "combining",
+      "rate": 0.1,
+      "n": 1000,
+      "undefended": {
+        "k": 111,
+        "rate": 0.111,
+        "ci95": [
+          0.092,
+          0.13
+        ]
+      },
+      "defended": {
+        "k": 47,
+        "rate": 0.047,
+        "ci95": [
+          0.034,
+          0.06
+        ]
+      }
+    },
+    "combining_25pct": {
+      "technique": "combining",
+      "rate": 0.25,
+      "n": 1000,
+      "undefended": {
+        "k": 365,
+        "rate": 0.365,
+        "ci95": [
+          0.337,
+          0.395
+        ]
+      },
+      "defended": {
+        "k": 127,
+        "rate": 0.127,
+        "ci95": [
+          0.107,
+          0.148
+        ]
+      }
+    },
+    "combining_50pct": {
+      "technique": "combining",
+      "rate": 0.5,
+      "n": 1000,
+      "undefended": {
+        "k": 680,
+        "rate": 0.68,
+        "ci95": [
+          0.65,
+          0.708
+        ]
+      },
+      "defended": {
+        "k": 302,
+        "rate": 0.302,
+        "ci95": [
+          0.273,
+          0.33
+        ]
+      }
+    },
+    "mixed_10pct": {
+      "technique": "mixed",
+      "rate": 0.1,
+      "n": 1000,
+      "undefended": {
+        "k": 344,
+        "rate": 0.344,
+        "ci95": [
+          0.314,
+          0.374
+        ]
+      },
+      "defended": {
+        "k": 39,
+        "rate": 0.039,
+        "ci95": [
+          0.028,
+          0.051
+        ]
+      }
+    },
+    "mixed_25pct": {
+      "technique": "mixed",
+      "rate": 0.25,
+      "n": 1000,
+      "undefended": {
+        "k": 620,
+        "rate": 0.62,
+        "ci95": [
+          0.589,
+          0.651
+        ]
+      },
+      "defended": {
+        "k": 106,
+        "rate": 0.106,
+        "ci95": [
+          0.088,
+          0.125
+        ]
+      }
+    },
+    "mixed_50pct": {
+      "technique": "mixed",
+      "rate": 0.5,
+      "n": 1000,
+      "undefended": {
+        "k": 810,
+        "rate": 0.81,
+        "ci95": [
+          0.783,
+          0.834
+        ]
+      },
+      "defended": {
+        "k": 194,
+        "rate": 0.194,
+        "ci95": [
+          0.171,
+          0.219
+        ]
+      }
+    }
+  },
+  "elapsed_s": 35.0
+}

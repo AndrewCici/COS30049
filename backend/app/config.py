@@ -77,3 +77,12 @@ def security_defences_enabled() -> bool:
     recording what the DoS attack scripts do against an undefended server.
     A function, read live, so it can be toggled per request/test."""
     return os.environ.get("SECURITY_DEFENCES", "on").strip().lower() != "off"
+
+
+# --- Detection-evasion defence (see security/evasion/REPORT.md) -----------
+
+def normalise_input_enabled() -> bool:
+    """False only when NORMALISE_INPUT=off — a demo-only escape hatch for
+    running the evasion attack scripts against the undefended endpoint. A
+    function, read live, for the same reason as security_defences_enabled."""
+    return os.environ.get("NORMALISE_INPUT", "on").strip().lower() != "off"

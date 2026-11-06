@@ -25,6 +25,13 @@ export interface DocumentScore {
   sentence_count: number;
 }
 
+export interface NormalisationInfo {
+  applied: boolean;
+  format_chars_removed: number;
+  combining_marks_removed: number;
+  confusables_mapped: number;
+}
+
 export interface Meta {
   method: string;
   model_name: string;
@@ -32,6 +39,7 @@ export interface Meta {
   fallback_used: boolean;
   bands: { low_below: number; high_at_or_above: number };
   warnings: string[];
+  normalisation: NormalisationInfo;
 }
 
 export interface ScoreResponse {

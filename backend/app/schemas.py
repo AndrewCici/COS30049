@@ -95,6 +95,22 @@ class DocumentScore(BaseModel):
     sentence_count: int
 
 
+class NormalisationInfo(BaseModel):
+    applied: bool = Field(
+        ..., description="False when NORMALISE_INPUT=off (demo-only; see "
+                         "security/evasion/REPORT.md).")
+    format_chars_removed: int = Field(
+        ..., description="Invisible Unicode format characters (category Cf) "
+                         "stripped before scoring.")
+    combining_marks_removed: int = Field(
+        ..., description="Combining marks NFKC could not reattach to a "
+                         "precomposed character, then stripped before "
+                         "scoring.")
+    confusables_mapped: int = Field(
+        ..., description="Cyrillic/Greek homoglyphs mapped to their Latin "
+                         "equivalent before scoring.")
+
+
 class Meta(BaseModel):
     method: str
     model_name: str
@@ -102,6 +118,7 @@ class Meta(BaseModel):
     fallback_used: bool
     bands: dict = Field(default_factory=lambda: dict(BAND_THRESHOLDS))
     warnings: list[str] = Field(default_factory=list)
+    normalisation: NormalisationInfo
 
 
 class ScoreResponse(BaseModel):
@@ -148,6 +165,11 @@ class ScoreResponse(BaseModel):
                             "Provide at least 3 sentences / 30 words for a "
                             "more meaningful estimate."
                         ],
+                        "normalisation": {
+                            "applied": True, "format_chars_removed": 0,
+                            "combining_marks_removed": 0,
+                            "confusables_mapped": 0,
+                        },
                     },
                 }
             ]
