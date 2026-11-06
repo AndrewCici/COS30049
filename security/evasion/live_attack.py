@@ -41,14 +41,17 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 BACKEND = REPO_ROOT / "backend"
 HERE = Path(__file__).resolve().parent
 RESULTS = HERE / "results"
+sys.path.insert(0, str(BACKEND))
 sys.path.insert(0, str(HERE))
 
+from app.detectors.statistical import StatisticalDetector  # noqa: E402
 from perturb import perturb  # noqa: E402
 
 DATA = BACKEND / "ml" / "data" / "test_split.jsonl"
 N = 30
 TECHNIQUE = "mixed"
 RATE = 0.25
+VERDICT_THRESHOLD = 0.5
 # Different from run_experiment.py's MASTER_SAMPLE_SEED on purpose: this
 # is a separate, smaller, independently-drawn sample, not a subset of
 # that experiment's 1000, so the two don't share any sentence by
@@ -56,14 +59,26 @@ RATE = 0.25
 SAMPLE_SEED = 20261107
 
 
-def load_candidates() -> list[str]:
-    rows = []
+def load_eligible_sentences() -> list[str]:
+    """Same filter as run_experiment.py's load_eligible_sentences: only
+    label=1 sentences the CLEAN, unperturbed model already scores as AI
+    (>= VERDICT_THRESHOLD). An earlier version of this function sampled
+    from every label=1 sentence regardless of the clean model's own
+    score on it, which let a handful of sentences the clean model
+    already got wrong into the "attack" sample -- inflating the
+    live-attack success rate for reasons that had nothing to do with the
+    attack. See security/evasion/REPORT.md's "Live-vs-offline mismatch,
+    investigated" section for the real numbers this produced."""
+    candidates = []
     with open(DATA, "r", encoding="utf-8") as f:
         for line in f:
             row = json.loads(line)
             if row["label"] == 1 and len(row["text"]) >= 20:
-                rows.append(row["text"])
-    return rows
+                candidates.append(row["text"])
+    detector = StatisticalDetector()
+    detector.load_verified()
+    scores = detector.score_sentences(candidates)
+    return [t for t, s in zip(candidates, scores) if s >= VERDICT_THRESHOLD]
 
 
 def main() -> None:
@@ -75,9 +90,9 @@ def main() -> None:
     ap.add_argument("--rate", type=float, default=RATE)
     args = ap.parse_args()
 
-    candidates = load_candidates()
+    eligible = load_eligible_sentences()
     rng = random.Random(SAMPLE_SEED)
-    sample = rng.sample(candidates, N)
+    sample = rng.sample(eligible, N)
 
     RESULTS.mkdir(parents=True, exist_ok=True)
     rows = []

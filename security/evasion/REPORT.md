@@ -123,16 +123,77 @@ python security/evasion/live_attack.py --label defended
 
 | Condition | Evaded |
 |---|---|
-| Undefended (`NORMALISE_INPUT=off`) | 21 of 30 (70.0%) |
-| Defended (default) | 8 of 30 (26.7%) |
+| Undefended (`NORMALISE_INPUT=off`) | 16 of 30 (53.3%) |
+| Defended (default) | 4 of 30 (13.3%) |
 
 Full per-attempt detail (score, verdict, evaded, perturbed text) is in
 `results/live_attack_undefended.csv` and `results/live_attack_defended.csv`.
-26.7% at `mixed`/25% is consistent with the 1,000-trial offline figure
-for the same condition (10.6%, CI 8.8–12.5%) in direction, and inside the
-much wider uncertainty a sample of 30 carries — it is not a independent
-re-confirmation of the exact rate, only of the real API showing the same
-effect the offline study found.
+13.3% at `mixed`/25% is consistent with the 1,000-trial offline figure
+for the same condition (10.6%, CI 8.8–12.5%) — within ordinary sampling
+variance for a sample this small (see the investigation below for the
+actual check of that claim, not just an assertion of it).
+
+### Live-vs-offline mismatch, investigated
+
+An earlier run of this same live test (committed, then superseded)
+reported 21/30 (70.0%) undefended and **8/30 (26.7%)** defended —
+noticeably higher than the offline figure for the matching condition
+would predict. Treating the offline 1,000-trial defended rate (10.6%) as
+the reference, the probability of seeing 8 or more evasions in 30
+independent trials at that rate is `P(X≥8 | n=30, p=0.106) ≈ 1.1%`: rare
+enough to investigate rather than wave off as "small-sample noise", so it
+was.
+
+**Root cause: `live_attack.py` sampled from every label=1 test sentence,
+not from the sentences the clean model already correctly flagged as
+AI-generated.** `run_experiment.py`'s `load_eligible_sentences()` filters
+candidates to ones the clean, unperturbed model scores ≥ 0.5 before
+sampling, on the reasoning stated earlier in this document — a realistic
+attacker starts from text that *would* be caught. The first version of
+`live_attack.py`'s `load_candidates()` was missing that filter, despite
+its own docstring already claiming the sample came from "the same
+eligible-AI-sentence pool as `run_experiment.py`" — the code and the
+comment had drifted apart.
+
+Checked directly, per the two tests below, rather than assumed:
+
+**(a) Control — the same 30 sentences sent unperturbed.** 2 of the 30
+sentences the buggy sampler drew already scored below the 0.5 verdict
+threshold with **zero** perturbation applied (clean scores 0.442 and
+0.422) — the clean model itself, independent of any attack, already
+called them human-made. These were "free" evasions the eligibility
+filter exists specifically to exclude.
+
+**(b) In-process check — perturbed/normalised sentence-level scoring
+versus the API's document-level verdict, and whether perturbation
+changes sentence-splitting.** Scoring the same 30 perturbed texts
+directly against the detector (bypassing HTTP, the middleware stack and
+`main.py`'s aggregation entirely) reproduced **exactly** 8/30 defended
+and 21/30 undefended — the same counts, and the same per-sentence scores
+to within display rounding, as the original live HTTP run. `mixed`
+perturbation never split one of these 30 sentences into more than one
+sentence after normalisation (checked for all 30: always exactly 1),
+and the document-level score always equalled the single-text score
+exactly (checked for all 30: zero mismatches). This rules out the HTTP
+layer, the middleware stack, and sentence-splitting/aggregation as
+contributors — the discrepancy was entirely in which 30 sentences got
+sampled, not in anything the request pipeline did to them.
+
+Excluding the 2 sentences that were already misclassified before any
+perturbation, the remaining 28 trials had 6 genuine perturbation-caused
+evasions (21.4%) — still above 10.6%, but `P(X≥6 | n=28, p=0.106) ≈
+6.9%`, unremarkable for a sample this size.
+
+**Fix:** `live_attack.py`'s `load_candidates()` was replaced with
+`load_eligible_sentences()`, implementing the filter its own docstring
+had always claimed existed (loads the statistical model once, scores
+every label=1 candidate, keeps only those ≥ 0.5 — identical logic to
+`run_experiment.py`). Both live runs were then repeated in full against
+freshly started, explicitly re-verified servers (confirmed via
+`meta.normalisation.applied` on a probe request before each run, not
+assumed from which command was typed) — the 53.3%/13.3% figures above
+are that corrected run's real output, not the original 70.0%/26.7%
+figures with an asterisk. `P(X≥4 | n=30, p=0.106) ≈ 40%`: unremarkable.
 
 ## A real defence-coverage bug, found by this experiment
 

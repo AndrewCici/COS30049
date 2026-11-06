@@ -526,7 +526,7 @@ python security/evasion/live_attack.py --label defended
 |---|---|---|
 | Homoglyph / invisible / fullwidth, any rate (1,000 trials each) | up to 81.0% evasion | **exactly 0%** |
 | Combining-mark ("Zalgo"), 50% rate (1,000 trials) | 68.0% evasion | 30.2% evasion |
-| Live, through the real HTTP API, `mixed` @ 25% (30 attempts) | 21/30 (70.0%) | 8/30 (26.7%) |
+| Live, through the real HTTP API, `mixed` @ 25% (30 attempts) | 16/30 (53.3%) | 4/30 (13.3%) |
 
 **Cost.** Over the full 14,556-sentence held-out test set, the defence
 costs **zero** measured accuracy on clean text (0.9005 either way) and
@@ -540,9 +540,11 @@ pairs that precomposed letter is a real character the English training
 vocabulary never contains, so it still reads as unfamiliar to the model
 even though normalisation "worked". Closing this fully would mean
 stripping every combining mark unconditionally — which would also break
-genuine Vietnamese text. Full account, including a real coverage gap
-this evaluation found and fixed in the pinned confusables table, in
-`security/evasion/REPORT.md`.
+genuine Vietnamese text. Full account — including a real coverage gap
+this evaluation found and fixed in the pinned confusables table, and a
+real sampling bug in the live-attack script that was inflating its
+success rate for reasons unrelated to the defence, investigated and
+fixed rather than left unexplained — in `security/evasion/REPORT.md`.
 
 ## Design decisions
 
