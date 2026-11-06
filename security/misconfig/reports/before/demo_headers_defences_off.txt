@@ -1,0 +1,38 @@
+
+[1mHeaders are controlled by the SECURITY_DEFENCES env var on the running server -- this script only sends requests and prints what comes back.[0m
+
+[1m=== Current server (whatever SECURITY_DEFENCES it was started with) ===[0m
+
+-- GET /api/v1/health (200) --
+HTTP/1.1 200 OK
+date: Fri, 06 Nov 2026 00:31:00 GMT
+content-length: 81
+content-type: application/json
+x-request-id: 4c8f2b04-9221-4659-bc08-0bd5668c6896
+
+
+-- POST /api/v1/score (422, text too short) --
+HTTP/1.1 422 Unprocessable Entity
+date: Fri, 06 Nov 2026 00:31:00 GMT
+content-length: 154
+content-type: application/json
+x-request-id: ca170e32-c0ca-4d7c-9e72-174ddbb07eab
+
+
+-- POST /api/v1/score (413, oversized body) --
+HTTP/1.1 422 Unprocessable Entity
+date: Fri, 06 Nov 2026 00:31:00 GMT
+content-length: 155
+content-type: application/json
+x-request-id: b1236ff5-b1d1-4905-bc2e-8368b67832ee
+
+
+To compare both states directly, run this script twice against two
+separately started servers:
+
+    SECURITY_DEFENCES=off  uvicorn app.main:app --port 8000 --no-server-header   # then run this script
+    SECURITY_DEFENCES=on   uvicorn app.main:app --port 8000 --no-server-header   # (the default) then run this script again
+
+With it off: no X-Content-Type-Options / Referrer-Policy / X-Frame-Options /
+Content-Security-Policy / Permissions-Policy / Cache-Control headers.
+With it on (default): all present, as shown above.

@@ -79,10 +79,14 @@ class BodySizeLimitMiddleware:
         await send({
             "type": "http.response.start",
             "status": 413,
+            # No X-Request-ID / security headers here: RequestIDMiddleware
+            # and SecurityHeadersMiddleware both sit outside this one in
+            # app.main's stack and add theirs to every response that passes
+            # back through them, this one included -- adding either again
+            # here would just duplicate the header.
             "headers": [
                 (b"content-type", b"application/json"),
                 (b"content-length", str(len(body)).encode()),
-                (b"x-request-id", request_id.encode()),
             ],
         })
         await send({"type": "http.response.body", "body": body})

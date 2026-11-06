@@ -21,6 +21,7 @@ from .schemas import (BAND_THRESHOLDS, DocumentScore, ErrorResponse,
                       ScoreRequest, ScoreResponse, SentenceScore, band_for,
                       confidence_for, verdict_for)
 from .security.body_limit import BodySizeLimitMiddleware
+from .security.headers import SecurityHeadersMiddleware, headers_for_path
 from .security.limiter import InferenceUnavailableError, inference_limiter
 from .sentences import split_sentences
 from .statistical_meta import load_meta
@@ -83,16 +84,26 @@ app = FastAPI(
                 "network access; a pretrained transformer is available as "
                 "an opt-in alternative (see AIDETECT_ENABLE_HF).",
     lifespan=lifespan,
+    # ReDoc duplicates Swagger UI (/docs) against the same OpenAPI document
+    # and needs a third external origin (Google Fonts) the Content-Security-
+    # Policy would otherwise never need to allow; disabled rather than
+    # widened for a page nothing links to. See security/misconfig/FINDINGS.md.
+    redoc_url=None,
 )
 
 # Registered innermost-first: add_middleware() builds a stack where the
 # LAST one added is OUTERMOST (runs first on the way in, last on the way
-# out). Desired order, outside in: request-id -> CORS -> body-size-limit ->
-# router. Putting the body-size check inside CORS (not outside it) means a
-# rejected oversized request still gets CORS headers on its 413 response,
-# so a browser can actually read it instead of reporting an opaque network
-# error; putting request-id outermost means its X-Request-ID / request_id
-# are available to every layer under it, including the body-size rejection.
+# out). Desired order, outside in: security-headers -> request-id -> CORS ->
+# body-size-limit -> router. Putting the body-size check inside CORS (not
+# outside it) means a rejected oversized request still gets CORS headers on
+# its 413 response, so a browser can actually read it instead of reporting
+# an opaque network error; putting request-id and security-headers outside
+# that means X-Request-ID and every security header land on that 413 too,
+# and on every other response, without each inner layer needing to know
+# about them. The one response this can't reach is a truly unhandled
+# exception's 500 (Starlette's ServerErrorMiddleware sends that from
+# outside all user middleware); unhandled_exception_handler below adds the
+# same headers there by hand, exactly as it already does for CORS.
 app.add_middleware(BodySizeLimitMiddleware)
 
 app.add_middleware(
@@ -133,6 +144,7 @@ class RequestIDMiddleware:
 
 
 app.add_middleware(RequestIDMiddleware)
+app.add_middleware(SecurityHeadersMiddleware)
 
 MIN_WORDS_RELIABLE = 30
 MIN_SENTENCES_RELIABLE = 3
@@ -204,12 +216,17 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     # returned to the client.
     logger.exception("Unhandled error [request_id=%s]", request_id)
     # Starlette sends this response from its outermost error middleware,
-    # which sits outside CORSMiddleware, so the CORS header is added here by
-    # hand. Without it the browser hides the body and the front end can only
-    # report a network failure instead of this message.
-    headers = {"Vary": "Origin"}
+    # which sits outside CORSMiddleware, SecurityHeadersMiddleware and
+    # RequestIDMiddleware alike, so the CORS, security and request-id
+    # headers are all added here by hand. Without the CORS header the
+    # browser hides the body and the front end can only report a network
+    # failure instead of this message; without the others, a 500 would be
+    # the one response that silently skips headers every other one carries.
+    headers = {"Vary": "Origin", "X-Request-ID": request_id}
     if request.headers.get("origin") == config.FRONTEND_ORIGIN:
         headers["Access-Control-Allow-Origin"] = config.FRONTEND_ORIGIN
+    if config.security_defences_enabled():
+        headers.update(headers_for_path(request.url.path))
     return JSONResponse(
         status_code=500,
         content=_error_body(

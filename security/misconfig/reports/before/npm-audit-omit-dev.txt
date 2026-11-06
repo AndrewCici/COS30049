@@ -1,0 +1,35 @@
+# npm audit report
+
+axios  1.0.0 - 1.19.0
+Severity: high
+Axios: Prototype pollution gadget in fetch adapter can alter outbound requests - https://github.com/advisories/GHSA-vh66-26gq-q6x8
+Axios: Prototype-Pollution Gadget in the Default Instance Allows Inherited Object.prototype.method to Override HTTP Method - https://github.com/advisories/GHSA-9fr6-4gfg-395g
+Axios: ReDoS in fromDataURI data: URL parser freezes the Node event loop (DoS) - https://github.com/advisories/GHSA-c29m-xwm3-cm6r
+Axios: ReDoS (O(N²)) in shouldBypassProxy host normalization, reachable via untrusted redirect Location - https://github.com/advisories/GHSA-mghh-pgcx-3jjj
+Axios: Prototype Pollution Gadget in axios toFormData Options - https://github.com/advisories/GHSA-x97p-jq2g-jp4f
+Axios: HTTP/2 adapter bypasses configured DNS lookup and proxy controls - https://github.com/advisories/GHSA-3pq3-5fj3-cg6v
+Axios: Denial of Service via Unhandled 'error' Event in HTTP/2 ClientHttp2Session Initialization - https://github.com/advisories/GHSA-542g-h47m-68v8
+Axios: Header Injection via Inherited headers After Minimal Interceptor - https://github.com/advisories/GHSA-j8rh-479h-cp32
+Axios: Fetch Adapter Header Injection via Inherited FormData getHeaders - https://github.com/advisories/GHSA-4hqw-qxg8-jxx2
+Axios: Node HTTP adapter prototype-pollution gadget allows request socket hijack via inherited createConnection - https://github.com/advisories/GHSA-m8m8-qj5v-23w3
+Axios: CIDR-form NO_PROXY entries are ignored, causing proxy exclusion bypass for internal IP ranges - https://github.com/advisories/GHSA-44g4-m2mj-wpvx
+Axios: maxRedirects: 0 is not enforced by the fetch adapter, allowing redirect-based SSRF - https://github.com/advisories/GHSA-r4gj-5m52-g5wh
+fix available via `npm audit fix --force`
+Will install axios@1.21.0, which is outside the stated dependency range
+node_modules/axios
+
+follow-redirects  1.16.0 - 1.16.1
+Severity: high
+follow-redirects array-form headers bypass cross-origin credential stripping - https://github.com/advisories/GHSA-q3jh-wrc6-jgq8
+follow-redirects sensitiveHeaders regex escaping can expose credential headers - https://github.com/advisories/GHSA-8r9p-f939-6h3c
+follow-redirects: Cross-realm sensitiveHeaders arrays are discarded and custom credentials can follow redirects - https://github.com/advisories/GHSA-mrwp-f3q8-3g9p
+fix available via `npm audit fix`
+node_modules/follow-redirects
+
+2 high severity vulnerabilities
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues, run:
+  npm audit fix --force
