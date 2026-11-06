@@ -71,9 +71,12 @@ intervals.
 
 ```
 python security/evasion/run_experiment.py
+python security/evasion/plot_results.py   # security/evasion/results/evasion_rates.png
 ```
 
 ## Results — offline, 1,000 trials per condition
+
+![Evasion success rate by technique and rate, undefended vs defended](results/evasion_rates.png)
 
 | Technique | Rate | Undefended: k/N (rate, 95% CI) | Defended: k/N (rate, 95% CI) |
 |---|---|---|---|

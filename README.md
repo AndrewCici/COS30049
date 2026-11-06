@@ -64,15 +64,19 @@ step:
    here, or anywhere else in this list, becomes a `422`/`413`/`503` in the
    shared `{"error": {code, message, request_id}}` envelope (see
    [API](#api)) — never a raw exception.
-5. **Splitting** — `split_sentences()` (`backend/app/sentences.py`) turns
-   the passage into sentences with offsets into the *original* text (so
-   the UI can highlight them in place); `score()` rejects with 422 if the
-   result exceeds `MAX_SENTENCES`.
-6. *(Normalisation — see [Known limitations](#known-limitations--next-steps):
-   this step, `backend/app/normalise.py`, is the Section 2.8 detection-evasion
-   defence and lands between the splitter and the limiter once that work is
-   complete; it is not yet implemented, and this README will be updated
-   when it is.)*
+5. **Normalisation** — `normalise_text()` (`backend/app/normalise.py`),
+   the Section 2.8 detection-evasion defence: Unicode NFKC normalisation,
+   then stripping invisible format characters and unresolved combining
+   marks, then mapping a pinned confusables subset back to Latin. Runs on
+   the whole passage before splitting, so the model only ever sees
+   normalised text; disabled with `NORMALISE_INPUT=off` (see
+   [Detection evasion](#advanced-attack--detection-evasion)).
+6. **Splitting** — `split_sentences()` (`backend/app/sentences.py`) turns
+   the *normalised* passage into sentences; `score()` rejects with 422 if
+   the result exceeds `MAX_SENTENCES`. Each sentence's offsets are then
+   translated back (`translate_span()`) into the *original* text the user
+   pasted, so the UI highlights exactly what they see on screen even when
+   normalisation changed what the model scored.
 7. **Admission control** — `inference_limiter.slot()`
    (`backend/app/security/limiter.py`) bounds how many inferences run at
    once; beyond capacity, or past a queue timeout, the request fails fast
@@ -99,9 +103,11 @@ step:
 
 ## Run it
 
-**Tested with Python 3.13.13 and Node v25.7.0** (frontend/package.json's
-`engines.node` requires `>=20.19.0`; the backend works on anything ≥3.11,
-but the pinned dependency versions below were resolved against 3.13).
+**Tested with Python 3.13.13.** Node: `frontend/package.json`'s
+`engines.node` requires `>=20.19.0`; tested on v26.13.0 and on Node 22 LTS
+(v22.23.4) — both installs, builds and lints cleanly (the backend works
+on anything Python ≥3.11, but the pinned dependency versions below were
+resolved against 3.13).
 
 Backend:
 
@@ -487,28 +493,76 @@ header's check actually does.
 
 ## Advanced attack — Detection evasion
 
-*(Section 2.8. This work is not yet complete; this section will be filled
-in with the measured before/after results and a link to
-`security/evasion/REPORT.md` once it is. The planned defence,
-`backend/app/normalise.py` — NFKC normalisation, removal of invisible
-Unicode format characters, and mapping of confusable characters to a
-Latin skeleton via a pinned subset of Unicode TR39 — is described in the
-[request walkthrough](#follow-one-request) above as the step it will
-occupy in the pipeline.)*
+**Mechanism.** Section 2.8: a correctly-detected AI-generated sentence,
+rewritten with Unicode tricks that leave it visually near-identical but
+change the exact character sequence the model tokenises — homoglyphs
+(Cyrillic/Greek look-alikes), invisible format characters, fullwidth
+forms, and combining-mark ("Zalgo") stacking. `backend/app/normalise.py`
+defends against this: NFKC normalisation, then stripping any invisible
+characters and combining marks NFKC did not resolve, then mapping a
+pinned Unicode TR39 confusables subset back to Latin — run before
+sentence-splitting and scoring, with offsets translated back to the
+user's own text so highlighting still lines up (see the
+[request walkthrough](#follow-one-request) above). Toggled with
+`NORMALISE_INPUT=off`, mirroring `SECURITY_DEFENCES`.
+
+**Reproduction:**
+
+```bash
+python security/evasion/run_experiment.py   # 1,000 trials/condition, offline
+python security/evasion/plot_results.py     # security/evasion/results/evasion_rates.png
+python security/evasion/measure_cost.py     # accuracy/latency/Vietnamese-text cost
+
+cd backend && NORMALISE_INPUT=off ../.venv/bin/uvicorn app.main:app --port 8000 --no-server-header
+python security/evasion/live_attack.py --label undefended
+# restart without NORMALISE_INPUT (default: on), then:
+python security/evasion/live_attack.py --label defended
+```
+
+**Results** (full per-technique table and methodology in
+`security/evasion/REPORT.md`):
+
+| | Undefended | Defended |
+|---|---|---|
+| Homoglyph / invisible / fullwidth, any rate (1,000 trials each) | up to 81.0% evasion | **exactly 0%** |
+| Combining-mark ("Zalgo"), 50% rate (1,000 trials) | 68.0% evasion | 30.2% evasion |
+| Live, through the real HTTP API, `mixed` @ 25% (30 attempts) | 21/30 (70.0%) | 8/30 (26.7%) |
+
+**Cost.** Over the full 14,556-sentence held-out test set, the defence
+costs **zero** measured accuracy on clean text (0.9005 either way) and
+negligible latency (p50 0.08ms, p95 0.36ms, against a ~130ms request
+budget); 10 genuine Vietnamese sentences come through unchanged. The
+combining-mark attack is only partially defended — not a bug, but a real
+trade-off: NFKC recomposes a base letter plus a combining mark into its
+precomposed Unicode form whenever one exists (the same mechanism that
+correctly restores Vietnamese diacritics), but for common vowel+accent
+pairs that precomposed letter is a real character the English training
+vocabulary never contains, so it still reads as unfamiliar to the model
+even though normalisation "worked". Closing this fully would mean
+stripping every combining mark unconditionally — which would also break
+genuine Vietnamese text. Full account, including a real coverage gap
+this evaluation found and fixed in the pinned confusables table, in
+`security/evasion/REPORT.md`.
 
 ## Design decisions
 
 - **Statistical model (TF-IDF + stylometric logistic regression) is the
   default, not the pretrained RoBERTa transformer.** The alternative
   considered was keeping the transformer as primary (Assignment 2's
-  original framing). It was rejected for a clean-machine install: the
-  transformer needs `torch`/`transformers` (a multi-hundred-MB install)
-  and downloads ~500MB of weights on first use, neither of which a grader
-  following this README from a fresh clone should be forced into just to
-  see the app run. The statistical model loads in under a second, needs
-  no network, and — per `docs/EVALUATION.md` — costs only ~2.6 points of
-  accuracy for that. The transformer remains available, opt-in, via
-  `AIDETECT_ENABLE_HF=1`.
+  original framing, when it was evaluated only on HC3). It was rejected
+  for a measured reason, not only a clean-install one: evaluated again on
+  the larger, merged DAIGT_v2 + HC3 test set (14,556 sentences,
+  `backend/models/model_comparison.md` and `hf_eval.json`), the
+  statistical model is **more** accurate overall, not less — accuracy
+  0.9005 vs 0.8017, F1 0.905 vs 0.823, ROC AUC 0.965 vs 0.905. The
+  transformer only wins on the HC3 half of that set (AUC 0.999 there);
+  on the DAIGT_v2 half it is markedly weaker (AUC 0.754), which the
+  original HC3-only evaluation in `docs/EVALUATION.md` could not reveal.
+  It also happens to need no `torch`/`transformers` install (a
+  multi-hundred-MB dependency) or ~500MB weights download, so a grader
+  following this README from a fresh clone gets the better-measured
+  model *and* the lighter install. The transformer remains available,
+  opt-in, via `AIDETECT_ENABLE_HF=1`.
 - **The model is loaded once in `lifespan`, behind a SHA-256 check, not
   lazily per request.** The alternative — load on first use, as the
   original design did — was rejected because a `joblib`/pickle file can

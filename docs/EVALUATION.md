@@ -72,3 +72,19 @@ Reproduce with `python -m ml.train` and `python -m ml.evaluate_hf`.
   functional (with an explicit warning) when the transformer can't load.
   Its probabilities are also well-calibrated enough to share the same UI
   scale, so swapping methods never changes the meaning of the display.
+
+> **Correction (post-Stage 3):** the "~2.6 points" figure above is correct
+> for *this page's own* HC3-only comparison (the table at the top of this
+> document), but the project later trained and evaluated both methods
+> again on a larger, merged DAIGT_v2 + HC3 test set — 14,556 sentences,
+> `backend/models/model_comparison.md` and `backend/models/hf_eval.json`
+> — and that fuller comparison found the opposite: the statistical model
+> is **more** accurate overall, not less (accuracy 0.9005 vs 0.8017, F1
+> 0.905 vs 0.823, ROC AUC 0.965 vs 0.905). The transformer's apparent edge
+> above comes entirely from the HC3 half of that later test set (AUC
+> 0.999 there); on the DAIGT_v2 half it is markedly weaker (AUC 0.754),
+> which the single-corpus HC3 evaluation on this page could not reveal.
+> This is the real reason the statistical model, not the transformer, is
+> the shipped default (see `README.md`'s "Design decisions") — not only
+> the clean-install trade-off described there, but a better-supported
+> measured result on the broader test set available after Stage 3.
