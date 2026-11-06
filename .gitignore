@@ -22,3 +22,4 @@ dataprep/*.jsonl
 dataprep/archive/
 dataprep/eda_plots/
 backend/ml/_smoke/
+submission/
