@@ -53,8 +53,10 @@ step:
 2. **Submit** — `analyse()` calls `scoreText()` in `frontend/src/api.ts`,
    an axios `POST` to `${VITE_API_BASE}/score`.
 3. **ASGI middleware** (`backend/app/main.py`, `backend/app/security/`),
-   outermost first: `SecurityHeadersMiddleware` → `RequestIDMiddleware` →
-   `CORSMiddleware` → `BodySizeLimitMiddleware`. The last one stops
+   outermost first — the last one `add_middleware()`d is the outermost on
+   the way in, per Starlette's (Starlette, 2026) stacking order, which
+   FastAPI uses directly: `SecurityHeadersMiddleware` → `RequestIDMiddleware`
+   → `CORSMiddleware` → `BodySizeLimitMiddleware`. The last one stops
    reading the request body the instant it exceeds `MAX_BODY_BYTES`
    (64 KiB) and rejects with 413 *before* anything below it ever runs —
    see [Denial of Service](#defence-1--denial-of-service-advanced).
@@ -143,7 +145,8 @@ to run the app as described above.
 By default the backend serves every request with the locally trained
 statistical model. Setting `AIDETECT_ENABLE_HF=1` (after installing
 `requirements-optional.txt`) opts into the pretrained RoBERTa transformer
-instead; the first request then downloads its weights (~500 MB), and if
+instead — `Hello-SimpleAI/chatgpt-detector-roberta` (Guo et al., 2023);
+the first request then downloads its weights (~500 MB), and if
 that fails (offline), the statistical model answers instead and the UI
 says so.
 
@@ -182,9 +185,9 @@ conda activate cos30049
 ```
 
 **2. Data processing** (`dataprep/data_prep.py`). Place the raw files
-first: DAIGT v2 `train_v2_drcat_02.csv` (Kaggle `thedrcat/daigt-v2-train-dataset`)
-in `dataprep/archive/`, and HC3 `all.jsonl` (Hugging Face `Hello-SimpleAI/HC3`)
-in `dataprep/`.
+first: DAIGT v2 `train_v2_drcat_02.csv` (Kaggle `thedrcat/daigt-v2-train-dataset`;
+Kłeczek, 2023) in `dataprep/archive/`, and HC3 `all.jsonl` (Hugging Face
+`Hello-SimpleAI/HC3`; Guo et al., 2023) in `dataprep/`.
 The processed dataset is shipped as `dataprep/merged_dataset.csv.zip`.
 To skip step 2, unzip it in place so that `dataprep/merged_dataset.csv` exists:
 
@@ -353,7 +356,8 @@ Nothing in this app distinguishes a browser-driven request from a
 scripted one, by design — the API is the actual product surface, the UI
 is one client of it.
 
-**Which Section 2.7 risks apply, and why the others do not:**
+**Which Section 2.7 risks apply, and why the others do not** (risk names
+follow the OWASP Top Ten; OWASP, 2021):
 
 | Risk | Applies? | Reason |
 |---|---|---|
@@ -470,8 +474,8 @@ cd ../backend && ../.venv/bin/uvicorn app.main:app --port 8000 --no-server-heade
 ../security/misconfig/demo_headers.sh
 ```
 
-OWASP ZAP (needs Docker) commands are in `security/misconfig/FINDINGS.md`,
-which also has the full per-alert table.
+OWASP ZAP (OWASP ZAP, 2026; needs Docker) commands are in
+`security/misconfig/FINDINGS.md`, which also has the full per-alert table.
 
 **Results:**
 
@@ -486,7 +490,10 @@ which also has the full per-alert table.
 script/font/widget needs an explicit directive change, and the policy
 fails closed by design. One round of this work chose
 `Cross-Origin-Resource-Policy: same-site` from a genuinely incorrect read
-of what that header checks (full account, including why, in
+of what that header checks: per the Fetch Standard (WHATWG, 2026), CORP's
+check only applies to a `no-cors`-mode request, never to the CORS-mode
+`fetch`/XHR calls axios makes, so `same-origin` is both stricter and
+correct here (full account, including why, in
 `security/misconfig/FINDINGS.md`) — a concrete reminder that "looks
 plausible for the deployment shape" is not the same as checking what a
 header's check actually does.
@@ -500,7 +507,8 @@ change the exact character sequence the model tokenises — homoglyphs
 forms, and combining-mark ("Zalgo") stacking. `backend/app/normalise.py`
 defends against this: NFKC normalisation, then stripping any invisible
 characters and combining marks NFKC did not resolve, then mapping a
-pinned Unicode TR39 confusables subset back to Latin — run before
+pinned Unicode TR39/UTS #39 confusables subset (Unicode Consortium, 2024)
+back to Latin — run before
 sentence-splitting and scoring, with offsets translated back to the
 user's own text so highlighting still lines up (see the
 [request walkthrough](#follow-one-request) above). Toggled with
@@ -522,11 +530,19 @@ python security/evasion/live_attack.py --label defended
 **Results** (full per-technique table and methodology in
 `security/evasion/REPORT.md`):
 
-| | Undefended | Defended |
+| Technique @ rate (1,000 trials each) | Undefended | Defended |
 |---|---|---|
-| Homoglyph / invisible / fullwidth, any rate (1,000 trials each) | up to 81.0% evasion | **exactly 0%** |
-| Combining-mark ("Zalgo"), 50% rate (1,000 trials) | 68.0% evasion | 30.2% evasion |
+| Homoglyph @ 50% | 341/1000 (34.1%) | 0/1000 (0.0%) |
+| Invisible @ 50% | 678/1000 (67.8%) | 0/1000 (0.0%) |
+| Fullwidth @ 50% | 489/1000 (48.9%) | 0/1000 (0.0%) |
+| Combining-mark ("Zalgo") @ 50% | 680/1000 (68.0%) | 302/1000 (30.2%) |
+| Mixed @ 50% | 810/1000 (81.0%) | 194/1000 (19.4%) |
 | Live, through the real HTTP API, `mixed` @ 25% (30 attempts) | 16/30 (53.3%) | 4/30 (13.3%) |
+
+Homoglyph, invisible and fullwidth are fully closed at **every** rate
+tested (10/25/50%), not only at 50% — the 50% row is shown because it is
+each technique's strongest attempt; see `security/evasion/REPORT.md`'s
+full table for all three rates.
 
 **Cost.** Over the full 14,556-sentence held-out test set, the defence
 costs **zero** measured accuracy on clean text (0.9005 either way) and
@@ -565,6 +581,14 @@ fixed rather than left unexplained — in `security/evasion/REPORT.md`.
   following this README from a fresh clone gets the better-measured
   model *and* the lighter install. The transformer remains available,
   opt-in, via `AIDETECT_ENABLE_HF=1`.
+- **Stylometric features sit alongside TF-IDF, not instead of it**
+  (`backend/app/detectors/features.py`). Function-word frequencies
+  (articles, prepositions, pronouns) are a standard, topic-independent
+  authorship-attribution signal going back to Mosteller and Wallace's
+  (1964) *Federalist Papers* authorship study; the Flesch (1948)
+  reading-ease formula is one of the readability features in the same
+  module. TF-IDF n-grams alone capture lexical fingerprints but not this
+  kind of structural style.
 - **The model is loaded once in `lifespan`, behind a SHA-256 check, not
   lazily per request.** The alternative — load on first use, as the
   original design did — was rejected because a `joblib`/pickle file can
@@ -589,8 +613,9 @@ fixed rather than left unexplained — in `security/evasion/REPORT.md`.
   responds in under 300ms while a deliberately slow `/score` call is still
   in flight.
 - **One error envelope for every failure mode**
-  (`{"error": {code, message, request_id}}`), rather than letting FastAPI's
-  default validation error shape leak through. A consistent, machine-
+  (`{"error": {code, message, request_id}}`), rather than letting
+  FastAPI's (FastAPI, 2026) default validation error shape leak through.
+  A consistent, machine-
   parseable shape is what let the front end map 413/422/503 to specific,
   actionable UI text instead of a generic "something went wrong".
 - **Exactly one CORS origin, not a wildcard or regex.** The original
@@ -608,13 +633,33 @@ fixed rather than left unexplained — in `security/evasion/REPORT.md`.
 
 ## Known limitations & next steps
 
-- **Detection evasion is not yet measured or defended against** (Section
-  2.8 work is in progress — see the placeholder above). Until then, the
-  limitations already documented in `docs/EVALUATION.md` apply, including
-  that light paraphrasing and human editing are known to defeat detectors
-  of this kind generally.
+- **The detection-evasion defence has three known, measured limits**
+  (full account in `security/evasion/REPORT.md`):
+  - **Combining-mark ("Zalgo") attacks are only partly defended** — at
+    50% perturbation (1,000 trials), the undefended rate is 68.0%
+    (680/1000) and the defended rate is 30.2% (302/1000), not 0%. This is
+    because NFKC recomposes a base letter plus a combining mark into its
+    precomposed Unicode form whenever one exists — the same mechanism
+    that correctly restores genuine Vietnamese diacritics — but for
+    common vowel+accent pairs that precomposed letter is a real character
+    the English training vocabulary never contains, so it still reads as
+    unfamiliar to the model even after normalisation. Closing this fully
+    would mean stripping every combining mark unconditionally, which
+    would also break genuine Vietnamese text.
+  - **The confusables table only covers a pinned subset.** It is ~72
+    Cyrillic/Greek entries drawn from the official Unicode TR39/UTS #39
+    confusables data (`security/evasion/data/confusables.txt`), not the
+    full dataset — a homoglyph from a script outside that subset would
+    not be caught.
+  - **Paraphrasing and human editing are out of scope** and still defeat
+    this detector, same as the limitations already documented in
+    `docs/EVALUATION.md` for the underlying model generally.
 - **English only**; other languages produce meaningless scores (stated in
   the UI's limitations panel).
+- **Fairness.** Published work shows detectors of this kind over-flag
+  non-native English writing (Liang et al., 2023); nothing in this
+  training pipeline corrects for that, and the UI's limitations panel
+  states it (see also `docs/EVALUATION.md`).
 - **Short texts are unreliable** — the API warns below 3 sentences / 30
   words, but still returns a (wide-interval) score rather than refusing.
 - **No persistence, no accounts.** Session history lives only in the
@@ -636,25 +681,31 @@ fixed rather than left unexplained — in `security/evasion/REPORT.md`.
 
 ## References
 
+- FastAPI (2026) *FastAPI documentation*. Available at: https://fastapi.tiangolo.com/
+  (Accessed: 7 November 2026).
+- Flesch, R. (1948) 'A new readability yardstick', *Journal of Applied
+  Psychology*, 32(3), pp. 221–233.
+- Guo, B., Zhang, X., Wang, Z., Jiang, M., Nie, J., Ding, Y., Yue, J. and
+  Wu, Y. (2023) 'How close is ChatGPT to human experts? Comparison
+  corpus, evaluation, and detection', arXiv preprint arXiv:2301.07597.
+- Kłeczek, D. (2023) *DAIGT V2 Train Dataset* [Dataset]. Kaggle.
+  Available at: https://www.kaggle.com/datasets/thedrcat/daigt-v2-train-dataset
+  (Accessed: 7 November 2026).
 - Liang, W., Yuksekgonul, M., Mao, Y., Wu, E. and Zou, J. (2023) 'GPT
   detectors are biased against non-native English writers', *Patterns*,
   4(7), 100779.
-- OWASP (2021) *OWASP Top Ten*. Available at: https://owasp.org/www-project-top-ten/
-  (Accessed: 2026).
-- Unicode Consortium (2024) *UTS #39: Unicode Security Mechanisms*.
-  Available at: https://www.unicode.org/reports/tr39/ (Accessed: 2026).
-- WHATWG (2026) *Fetch Standard*. Available at: https://fetch.spec.whatwg.org/
-  (Accessed: 2026).
-- FastAPI (2026) *FastAPI documentation*. Available at: https://fastapi.tiangolo.com/
-  (Accessed: 2026).
-- Starlette (2026) *Starlette documentation*. Available at: https://www.starlette.io/
-  (Accessed: 2026).
-- OWASP ZAP (2026) *ZAP documentation*. Available at: https://www.zaproxy.org/docs/
-  (Accessed: 2026).
 - Mosteller, F. and Wallace, D.L. (1964) *Inference and Disputed
   Authorship: The Federalist*. Reading, MA: Addison-Wesley.
-- Flesch, R. (1948) 'A new readability yardstick', *Journal of Applied
-  Psychology*, 32(3), pp. 221–233.
+- OWASP (2021) *OWASP Top Ten*. Available at: https://owasp.org/www-project-top-ten/
+  (Accessed: 7 November 2026).
+- OWASP ZAP (2026) *ZAP documentation*. Available at: https://www.zaproxy.org/docs/
+  (Accessed: 7 November 2026).
+- Starlette (2026) *Starlette documentation*. Available at: https://www.starlette.io/
+  (Accessed: 7 November 2026).
+- Unicode Consortium (2024) *UTS #39: Unicode Security Mechanisms*.
+  Available at: https://www.unicode.org/reports/tr39/ (Accessed: 7 November 2026).
+- WHATWG (2026) *Fetch Standard*. Available at: https://fetch.spec.whatwg.org/
+  (Accessed: 7 November 2026).
 
 ## Use of generative AI
 
